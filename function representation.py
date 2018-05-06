@@ -20,9 +20,9 @@ list_of_points = []
 
 
 def function(a, b, c, d, e, f):
-    a = a / 4
-    c = c / 4
-    e = e / 4
+    a = a / 3.3
+    c = c / 3.3
+    e = e / 3.3
     global list_of_points, grid
     for x in range(-40, 41):
         if x == 0:
@@ -48,4 +48,4 @@ def function(a, b, c, d, e, f):
     prent()
 
 
-function(0.02, 3, 0.5, 2, -10, -1)
+function(6.9, 1, 0, 0, 0, 1)
