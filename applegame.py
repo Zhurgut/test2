@@ -50,8 +50,14 @@ delfactor = 5
 
 def gameover():
     global breaker
-    print("""You died, the game is over!
-You can try again however""")
+    if gamerlyover == 0:
+        print("""You died, the game is over!
+You can try again however
+""")
+    else:
+        print("""
+YOU DIED
+""")
     breaker = 1
 
 
@@ -86,22 +92,33 @@ Your stomach hurts, you feel weak and faint...""")
     elif nrapples < 0:
         if nextdelivery == 0:
             print("""
-
+Ms Duboise looks you over closely. From her back she draws a short
+knife and stabs you in the stomach.
 """)
             gameover()
         if nextdelivery == 1:
             print("""
+Mrs Brodsmoth calls into the house:" Honey, could you come real quick please.
+And bring that thing you like to play with so much recently."
 
+Next you see a bulbous face appearing in the doorframe eyeing you suspiciously.
+Upon that he quickly draws a gun from behind his back an shoots you in the face
 """)
             gameover()
         if nextdelivery == 2:
             print("""
-
+"YOU IMPERTINENT LITTLE KID!" yells Mr Porcroch as he grabs you by your
+sholders and throws you into his dog-cage where it does not take long until
+you stop feeling the dogs tearing at your flesh and ripping off your skin...
 """)
             gameover()
         if nextdelivery == 3:
             print("""
-
+The expression on the Smith's face seems to indicate he just saw the devil.
+As he reaches slowly for his hammer he mumbles:" If you dare treat me like that
+I shall treat you no more kindly..."
+Never have you seen such a massive hammer move that quickly towards your face,
+and never shall you again...
 """)
             gameover()
     elif motivation > motlim:
@@ -129,21 +146,26 @@ it hurts but you just leave that apple alone and continue
 """)
         inputt = input(message)
         do(inputt)
-        print("""
+        if breaker != 1:
+            print("""
 You notice that you begin to sweat strongly for no obvious reason""")
         t.sleep(2)
-        print("""
+        if breaker != 1:
+            print("""
 Also your mouth starts tingling and you start twitching in the face""")
         t.sleep(2)
-        print("""
+        if breaker != 1:
+            print("""
 Nonetheless, you continue
 """)
         inputt = input(message)
         do(inputt)
-        print("""
+        if breaker != 1:
+            print("""
 Suddenly you need to vomit and you've now got severe muscle spasms""")
         t.sleep(3)
-        print("""
+        if breaker != 1:
+            print("""
 You feel slowly loosing consciousness...""")
         t.sleep(2)
         print("\
@@ -186,21 +208,34 @@ def eat():
         skips += 0.5
         print("""
 Having tried to eat an apple without even having one in your
-basket at the moment, you think strongly about your stupidity.""")
+basket at the moment, you think strongly about your stupidity.
+""")
         kill()
-        print("""
+        if breaker != 1:
+            print("""
 In spite of feeling deep disappointment for yourself, you decide
-not to kill yourself this time.""")
+not to kill yourself this time.
+""")
 
 
 def drop():
     global nrturns, nrapples, motivation, skips
-    t.sleep(1)
-    nrturns += 1
-    nrapples = 0
-    motivation += 2
-    skips += 1
-    kill()
+    if nrapples < 1:
+        motivation += 2
+        kill()
+        if breaker != 1:
+            print("""
+You just tried to drop 0 (zero) (!) apples (idiot)
+In spite of feeling deep disappointment for yourself, you decide
+not to kill yourself this time.
+""")
+    else:
+        t.sleep(1)
+        nrturns += 1
+        nrapples = 0
+        motivation += 2
+        skips += 1
+        kill()
 
 
 def deliver():
@@ -219,15 +254,19 @@ beloved swiss army knife.
         journthere = deliveries[nextdelivery]["dis"] * nrapples / delfactor
         hunger += journthere
         kill()
-        nrapples -= deliveries[nextdelivery]["nr"]
-        kill()
-        win()
-        t.sleep(deliveries[nextdelivery]["dis"])
-        motivation = 0
-        journback = deliveries[nextdelivery]["dis"] * nrapples / delfactor
-        hunger += journback
-        kill()
-        nextdelivery += 1
+        if breaker != 1:
+            nrapples -= deliveries[nextdelivery]["nr"]
+            kill()
+            if breaker != 1:
+                win()
+                t.sleep(deliveries[nextdelivery]["dis"])
+                motivation = 0
+                journback1 = deliveries[nextdelivery]["dis"]
+                journback2 = nrapples / delfactor
+                journback = journback1 * journback2
+                hunger += journback
+                kill()
+                nextdelivery += 1
 
 
 def do(pinput):
@@ -275,8 +314,8 @@ while gamerlyover != 1:
     deaths += 1
 
     inputtt = input(f"""
-    It's a sunny day, you know what you gotta do so...
-    You wanna {options}? - """)
+It's a sunny day, you know what you gotta do so...
+You wanna {options}? - """)
     do(inputtt)
 
     while t.time() - t1 < timelim[0] and breaker != 1:
@@ -314,7 +353,7 @@ you get struck by lightning and die""")
 
 print(f"""
 Congrats, you have successfully mastered the game.
-You died {deaths} times. I encourage you to at least try to do better
+You died {deaths} times. I encourage you to do better
 in real life.
 
 The lesson we learned today:
