@@ -24,3 +24,9 @@ for elem in listing:
             ind += 1
 
 print(" a " in "bab")
+
+listt = [["asd"], ["sc"], ["dw"], ["a"]]
+for lists in listt:
+    listt.remove(lists)
+
+print(listt)
