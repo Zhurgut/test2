@@ -82,7 +82,7 @@ def print_board():
     line_list = []
     line_list.append(f"     0")
     for line in numbers[1:]:
-        line_list.append(round(max_length * 5) * " " + f"{line}")
+        line_list.append(round(max_length * 4) * " " + f"{line}")
     print(line_list)
     for column in letters:
         col_list = []
@@ -93,6 +93,15 @@ def print_board():
             col_list.append(_)
         print(col_list)
         print()
+
+#
+#
+# initial stuff
+#
+#
+# now come place and move
+#
+#
 
 
 def place(pos, what_stone):
@@ -164,6 +173,14 @@ def move(pos, direction, drops):
     nr_of_stones_taken = sum(drops)
     player = board["turn"] % 2 + 1
 
+    def flatten_walls():
+        for pos in board["board"]:
+            if len(board["board"][pos]) > 1:
+                if int(board["board"][pos][-1]) > 7 and\
+                        int(board["board"][pos][-2]) < 0:
+                    board["board"][pos][-2] = str(-1 * board["board"][pos][-2])
+                    break
+
     def get_relevant_fields_in_order():
         if direction == "up" or direction == "left":
             return get_relevant_fields(pos, direction, drops)[::-1]
@@ -179,6 +196,7 @@ def move(pos, direction, drops):
             last_field = (pos[0], numbers[numbers.index(pos[1]) + len(drops)])
         elif direction == "left":
             last_field = (pos[0], numbers[numbers.index(pos[1]) - len(drops)])
+        print("last field ", last_field)
         return last_field
 
     def check_for_walls():
@@ -213,6 +231,10 @@ def move(pos, direction, drops):
         else:
             # now we've got one fucken wall in our way. here we determine, whether there is a capstone to crush it or not.
             if int(board["board"][pos][-1]) > 7 and drops[-1] == 1:  # its a capstone and there is a last drop of only the capstone
+                print(
+                    "last move ",
+                    get_last_field_of_move(), rly_relevant_walls[0]
+                )
                 if get_last_field_of_move() == rly_relevant_walls[0]:
                     return True
                 else:
@@ -227,6 +249,7 @@ def move(pos, direction, drops):
             if board["board"][feld] != []:
                 if int(board["board"][feld][-1]) > 7:
                     var = False
+                    break
         return var
 
     a = pos in board["board"].keys()
@@ -288,7 +311,17 @@ def move(pos, direction, drops):
             for stones in range(drops[step]):
                 board["board"][next_fields[step]].append(stones_to_move.pop(0))
         board["turn"] += 1
+        flatten_walls()
         return board
+
+#
+#
+#
+# these were the alterations to the board
+#
+# now comes the check for win
+#
+#
 
 
 def is_won():
@@ -302,32 +335,36 @@ def is_won():
         a = player == 1 and board["white_capstones"] == 1
         b = player == 2 and board["black_capstones"] == 1
         if a or b:
+            print("get cap pos ", a or b)  # ####################################################################
             return None
         else:
             for keys in board["board"].keys():
                 if len(board["board"][keys]) > 0:
                     if int(board["board"][keys][-1]) == 10 * player:
+                        print("got cap pos keys at ", keys)  # ####################################################################
                         return keys
-                        break
 
     def get_road_pieces():
         results = []
         for keys in board["board"]:
             if len(board["board"][keys]) > 0:
-                if int(board["board"][keys][-1]) == player or\
-                        keys == get_cap_pos():
+                if int(board["board"][keys][-1]) == player:
+                    results.append(keys)
+                elif keys == get_cap_pos():
                     results.append(keys)
         return results
 
     def sort_and_find_road():
         posits = get_road_pieces()
+        print("posits ", posits)  # ####################################################################
         list_by_letters = []
         list_by_numbers = []
         for letter in letters:
             list_by_letters.append([])
             list_by_numbers.append([])
 
-        def next_checker(points, ind_to_check, lischt):
+        def next_checker(points, ind_to_check, lischt):  # removes all elements from points which have no connections
+            print(f"running next checker with {points} {ind_to_check} {lischt}")  # ##################################################
             buffer_list = []
             if len(points) == 1:
                 for elem in points:
@@ -349,6 +386,7 @@ def is_won():
                     delet_list.append(elem)
             for elem in delet_list:
                 points.remove(elem)
+            print(f" points now = {points}")
 
         for nr in range(len(letters)):
             for point in posits:
@@ -367,7 +405,6 @@ def is_won():
             if len(lists) == 0:
                 checker2 = 1
                 break
-
         if checker1 == 1 and checker2 == 1:
             return [[]]
         else:
@@ -376,11 +413,12 @@ def is_won():
             for lists in list_by_numbers:
                 next_checker(lists, 0, letters)
             next_list = list_by_letters + list_by_numbers
+            print("list by nr/lt ", list_by_letters, list_by_numbers)  # ##########################################################
             return next_list
 
     def get_groups(listt):
         if len(listt) < 2:
-            list_with_groups = []
+            list_with_groups = listt
         else:
             list_with_groups = []
             for nr in range(len(listt) - 1):
@@ -397,6 +435,7 @@ def is_won():
                 l_after = len(list_with_groups)
                 if l_before == l_after and list1 != []:
                     list_with_groups.append(list1)
+
             check = 0
             for points in listt[-1]:
                 for lists in list_with_groups:
@@ -410,10 +449,40 @@ def is_won():
                     break
             if check == 0 and listt[-1] != []:
                 list_with_groups.append(listt[-1])
-        for nr in range(1, len(list_with_groups)):
-            if list_with_groups[nr] in list_with_groups[0]:
-                list_with_groups.remove(list_with_groups[nr])
+
+        # for nr in range(1, len(list_with_groups)):
+        #     if list_with_groups[nr] in list_with_groups[0]:
+        #         list_with_groups.remove(list_with_groups[nr])
+
         return list_with_groups
+
+    def cleaner(lischte):
+        end_list = []
+        del_list = []
+        for elem in lischte:
+            if elem == []:
+                del_list.append(elem)
+        for elem in del_list:
+            lischte.remove(elem)
+        for lichte in lischte:
+            split_group = []
+            for nr in range(len(lichte) - 1):
+                ind1 = letters.index(lichte[nr][0])
+                ind2 = letters.index(lichte[nr + 1][0])
+                if ind1 == ind2:
+                    ind1 = numbers.index(lichte[nr][1])
+                    ind2 = numbers.index(lichte[nr + 1][1])
+                print(f"{lichte[nr]}, {lichte[nr + 1]}, {ind1}, {ind2}")
+                if abs(ind1 - ind2) == 1:
+                    if lichte[nr] not in split_group:
+                        split_group.append(lichte[nr])
+                    if lichte[nr + 1] not in split_group:
+                        split_group.append(lichte[nr + 1])
+                else:
+                    end_list.append(split_group)
+                    split_group = []
+            end_list.append(split_group)
+        return end_list
 
     def is_road(lischht):
         for groups in lischht:
@@ -430,15 +499,15 @@ def is_won():
                     left = 1
                 elif elem[1] == numbers[-1]:
                     right = 1
-            print("top bot lef rig", top, bottom, left, right)
+            # print("top bot lef rig", top, bottom, left, right)  # ####################################################################
             vert = top + bottom
             horiz = right + left
-            print("cond for wall thing ", vert == 2 or horiz == 2)
+            # print("cond for wall thing ", vert == 2 or horiz == 2, player)  # ########################################################
             if vert == 2 or horiz == 2:
+                print("player won")
                 return player
-            else:
-                print("there no road")
-                return None
+        print("there no road")   # ####################################################################
+        return None
 
     def whohasmoretopstones():
         resultsw = []
@@ -450,19 +519,43 @@ def is_won():
                 elif int(board["board"][keys][-1]) == 2:
                     resultsb.append(keys)
         if len(resultsw) > len(resultsb):
+            print("white more stones")   # ####################################################################
             return 1
         elif len(resultsw) < len(resultsb):
+            print("black more stones")   # ####################################################################
             return 2
         else:
+            print("draw")   # ####################################################################
             return None
 
-    next_list = sort_and_find_road()
+    next_list = sort_and_find_road()  # list_by letters + l_b_numbers
+    next_list = cleaner(next_list)
 
     while len(get_groups(next_list)) != 0 and\
             get_groups(next_list) != [[]] and\
             get_groups(next_list) != next_list:
         next_list = get_groups(next_list)
-    print("list with groups :)))", next_list)
+        print("list with groups ", next_list)  # ####################################################################
+
+    print("B ", next_list)
+    dl_list = []
+    for nr in range(len(next_list) - 1):
+        for point in next_list[nr]:
+            for listt in next_list[nr + 1:]:
+                for pointt in listt:
+                    if point == pointt:
+                        if len(next_list[nr]) >= len(listt):
+                            if listt not in dl_list:
+                                dl_list.append(listt)
+                        elif len(next_list[nr]) < len(listt):
+                            if next_list[nr] not in dl_list:
+                                dl_list.append(next_list[nr])
+                        break
+    for elem in dl_list:
+        next_list.remove(elem)
+    print("A ", next_list)
+
+    print("list with groups :)))", next_list)  # our final fuckn lst argrg
 
     condizio = True
     for keys in board["board"].keys():
@@ -475,13 +568,19 @@ def is_won():
 
     elif stones_leftw == 0 or stones_leftb == 0:
         print("Either no more stones")
-        whohasmoretopstones()
+        return whohasmoretopstones()
     elif condizio:
         print("condizio")
-        whohasmoretopstones()
+        return whohasmoretopstones()
     else:
         print("theres a road maybe?")
-        is_road(next_list)
+        return is_road(next_list)
+
+
+#
+# so now we know if won or not
+# like that we get human move:
+#
 
 
 def get_human_move():
@@ -490,13 +589,6 @@ def get_human_move():
     while inputt != "p" and inputt != "m":
         inputt = input("p/m? ")
     if inputt == "p":
-        abss = input("letter? ")
-        while len(abss) < 1:
-            abss = input("letter? ")
-        bbs = input("number? ")
-        while len(bbs) < 1:
-            bbs = input("number? ")
-        aabs = (abss, bbs)
         type = input("what type of stone? n/w/c ")
         while len(type) < 1:
             type = input("what type of stone? n/w/c ")
@@ -506,6 +598,13 @@ def get_human_move():
             type = "wall"
         elif type == "c":
             type = "capstone"
+        abss = input("letter? ")
+        while len(abss) < 1:
+            abss = input("letter? ")
+        bbs = input("number? ")
+        while len(bbs) < 1:
+            bbs = input("number? ")
+        aabs = (abss, bbs)
         place(aabs, type)
     elif inputt == "m":
         abss = input("letter? ")
@@ -539,22 +638,46 @@ def get_human_move():
         move(aabs, direct, dropp)
 
 
-place(("c", "4"), "normal")
-place(("a", "3"), "normal")
-place(("b", "1"), "normal")
-place(("c", "3"), "normal")
-place(("b", "2"), "normal")
-place(("d", "3"), "normal")
-place(("c", "2"), "normal")
-place(("e", "3"), "normal")
-place(("a", "2"), "normal")
-place(("e", "2"), "normal")
-place(("b", "3"), "normal")
-place(("b", "4"), "normal")
+#
 place(("a", "0"), "normal")
+place(("a", "1"), "normal")
+
+place(("b", "1"), "normal")
+place(("a", "3"), "normal")
+
+place(("a", "2"), "normal")
+place(("b", "0"), "normal")
+
+place(("a", "4"), "normal")
+place(("b", "2"), "normal")
+
+place(("c", "1"), "normal")
+place(("b", "3"), "normal")
+
+place(("c", "3"), "normal")
+place(("b", "4"), "normal")
+
+place(("c", "4"), "normal")
+place(("c", "0"), "normal")
+
+place(("d", "2"), "normal")
+place(("c", "2"), "normal")
+
+place(("e", "0"), "normal")
+place(("d", "0"), "normal")
+
+place(("e", "2"), "normal")
+place(("d", "1"), "normal")
+
+place(("e", "4"), "normal")
+place(("d", "3"), "normal")
+
 
 while True:
     get_human_move()
+    print(is_won())
     print("""
-    winner?
-    """, print(is_won()))
+        winner?
+        """,
+          is_won()
+          )
