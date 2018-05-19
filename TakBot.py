@@ -30,7 +30,7 @@ import random
 
 # config:
 
-board_size = 3
+board_size = 4
 nr_before_normal = 15  # nr of turn before which the bot only places normal stones
 
 # end of config
@@ -821,22 +821,18 @@ def get_human_move():
 winner = None
 
 while is_won(board) is None and winner != 1:
-    print("hello?1")
     before_hum = copy.deepcopy(board)
     while board == before_hum:
         get_human_move()  # we get human move until a move was made
     winner = is_won(board)  # if white has won pc will make move but then
     # while loop will break
-    print("hello?2")
     if winner != 1:
-        print("hello?3")
         winning_move_made = 0
         for new_board in get_all_moves(board):
             if is_won(new_board) == 2:
                 board = new_board
                 winning_move_made = 1
-                break
-        print("hello4")            # if there is a winning move, break
+                break  # if there is a winning move, break
         if winning_move_made == 0:          # no winning move was made, therefore go through loop again
             white_has_winning_move = 0
             for new_board in get_all_moves(board):                  #
@@ -848,15 +844,30 @@ while is_won(board) is None and winner != 1:
                     break
             if white_has_winning_move == 1:
                 print("white has a winning move")
+                no_white_winning = []
                 for new_board in get_all_moves(board):
                     white_has_winning_move_for_that_board = 0               #
-                    for board_after_white in get_all_moves(new_board):  # for every new_board, if white has no winning moves,
-                        if is_won(board_after_white) == 1:                  # make move
+                    for board_after_white in get_all_moves(new_board):  # for every new_board, check if white has no winning moves,
+                        if is_won(board_after_white) == 1:                  #
                             white_has_winning_move_for_that_board = 1       #
                             break
-                    if white_has_winning_move_for_that_board == 0:         # make move as soon as found one move which has no winning moves for white
-                        board = new_board
-                        break
+                    if white_has_winning_move_for_that_board == 0:         # append new_board to list with all board where white can not win as soon as
+                                                                            # found one move which has no winning moves for white
+                        no_white_winning.append(new_board)
+                for new_board in no_white_winning:
+                    new_board["turn"] += 1
+                    for board_after_black in get_all_moves(new_board):
+                        if is_won(board_after_black) == 2:
+                            new_board["turn"] -= 1
+                            board = new_board                       # if a board where white cannot win has a possibility fo winning for black play it
+                            winning_move_made = 1
+                            break
+                if winning_move_made == 0:
+                    if len(no_white_winning) > 0:        # there are no new_board where neither black nor white can win
+                        no_white_winning[0]["turn"] -= 1
+                        board = no_white_winning[0]  # just move where white cant win
+                else:
+                    print(" I resign ")
             else:
                 print("white has no winning moves... supposedly")  # if white has no winning moves: check for winning moves for black :)
                 for new_board in get_all_moves(board):
@@ -870,5 +881,5 @@ while is_won(board) is None and winner != 1:
                 if winning_move_made == 0:                                   # if there arent any winning moves for anyone, no one cares *shrug*
                     board = next(get_all_moves(board))
 
-
+print_board(board)
 print(f"{is_won(board)} has won! gg ^^")
