@@ -1,3 +1,7 @@
+import itertools as it
+import copy
+import random
+
 # I shall yet play that fucken game!
 
 
@@ -26,7 +30,8 @@
 
 # config:
 
-board_size = 5
+board_size = 3
+nr_before_normal = 15  # nr of turn before which the bot only places normal stones
 
 # end of config
 
@@ -65,19 +70,67 @@ for letter in letters:
         board["board"][(letter, str(nr))] = []
 
 
-def print_board():
-    global board
-    player = board["turn"] % 2 + 1
+def get_moves_list(max_length):
+    final = []
+    final.append([max_length])
+    list_to_combine = []
+    list_with_numbers = list(range(1, max_length))  # [1, 2, 3, 4, 5]
+    length = len(list_with_numbers)
+    for nr in range(1, length + 1):  # [1, 2, 3, 4, 5]
+        for time in range(max_length // nr):
+            list_to_combine.append(nr)
+    # print(list_to_combine)
+    list_to_permute = []
+    for nr_of_moves in range(1, max_length + 1):
+        combs = list(it.combinations(list_to_combine, nr_of_moves))
+        combs = set(combs)
+        # print(nr_of_moves, combs)
+        for elem in combs:
+            if sum(elem) <= max_length:
+                list_to_permute.append(elem)
+    # print(list_to_permute)
+    new_list_to_permute = []
+    for elem in list_to_permute:
+        list_to_append_to_permute = []
+        for nr in elem:
+            list_to_append_to_permute.append(nr)
+        new_list_to_permute.append(list_to_append_to_permute)
+    # print(new_list_to_permute)
+
+    for elem in new_list_to_permute:
+        perms = it.permutations(elem)
+        perms = set(perms)
+        # print(list(perms))
+        for perm in perms:
+            pen_final = []
+            for nr in perm:
+                pen_final.append(nr)
+            final.append(pen_final)
+    return final
+
+
+all_moves1 = [[1]]
+all_moves2 = get_moves_list(2)
+all_moves3 = get_moves_list(3)
+all_moves4 = get_moves_list(4)
+all_moves5 = get_moves_list(5)
+all_moves6 = get_moves_list(6)
+
+types = {"normal", "capstone", "wall"}
+
+
+def print_board(boardd):
+    player = boardd["turn"] % 2 + 1
     max_length = 0
-    for key in board["board"]:
-        if len(board["board"][key]) > max_length:
-            max_length = len(board["board"][key])
+    for key in boardd["board"]:
+        if len(boardd["board"][key]) > max_length:
+            max_length = len(boardd["board"][key])
     max_length += 1
-    print("turn nr: ", board["turn"])
-    print("white_stones", board["white_stones"])
-    print("black_stones", board["black_stones"])
-    print("white_capstones", board["white_capstones"])
-    print("black_capstones", board["black_capstones"])
+    print("turn nr: ", boardd["turn"])
+    print("white_stones", boardd["white_stones"])
+    print("black_stones", boardd["black_stones"])
+    print("white_capstones", boardd["white_capstones"])
+    print("black_capstones", boardd["black_capstones"])
     print("Next Player: ", player)
     line_list = []
     line_list.append(f"     0")
@@ -88,8 +141,8 @@ def print_board():
         col_list = []
         col_list.append(column)
         for line in numbers:
-            col_list.append(board["board"][(column, line)])
-            _ = ((max_length - len(board["board"][(column, line)])) * 3) * " "
+            col_list.append(boardd["board"][(column, line)])
+            _ = ((max_length - len(boardd["board"][(column, line)])) * 3) * " "
             col_list.append(_)
         print(col_list)
         print()
@@ -104,8 +157,7 @@ def print_board():
 #
 
 
-def place(pos, what_stone):
-    global board
+def place(board, pos, what_stone):
     player = board["turn"] % 2 + 1
     stone = 0
     check = 0
@@ -168,8 +220,8 @@ def get_relevant_fields(pos, direction, drops):
     return relevant_cords
 
 
-def move(pos, direction, drops):
-    global turns, board, board_size, letters, numbers, directions
+def move(board, pos, direction, drops):
+    global turns, board_size, letters, numbers, directions
     nr_of_stones_taken = sum(drops)
     player = board["turn"] % 2 + 1
 
@@ -196,7 +248,7 @@ def move(pos, direction, drops):
             last_field = (pos[0], numbers[numbers.index(pos[1]) + len(drops)])
         elif direction == "left":
             last_field = (pos[0], numbers[numbers.index(pos[1]) - len(drops)])
-        print("last field ", last_field)
+        # print("last field ", last_field)
         return last_field
 
     def check_for_walls():
@@ -231,10 +283,10 @@ def move(pos, direction, drops):
         else:
             # now we've got one fucken wall in our way. here we determine, whether there is a capstone to crush it or not.
             if int(board["board"][pos][-1]) > 7 and drops[-1] == 1:  # its a capstone and there is a last drop of only the capstone
-                print(
-                    "last move ",
-                    get_last_field_of_move(), rly_relevant_walls[0]
-                )
+                # print(
+                #     "last move ",
+                #     get_last_field_of_move(), rly_relevant_walls[0]
+                # )
                 if get_last_field_of_move() == rly_relevant_walls[0]:
                     return True
                 else:
@@ -324,8 +376,7 @@ def move(pos, direction, drops):
 #
 
 
-def is_won():
-    global board
+def is_won(board):
     player = board["turn"] % 2 + 1
     player = 3 - player
     stones_leftw = board["white_stones"] + board["white_capstones"]
@@ -335,13 +386,13 @@ def is_won():
         a = player == 1 and board["white_capstones"] == 1
         b = player == 2 and board["black_capstones"] == 1
         if a or b:
-            print("get cap pos ", a or b)  # ####################################################################
+            # print("get cap pos ", a or b)  # ####################################################################
             return None
         else:
             for keys in board["board"].keys():
                 if len(board["board"][keys]) > 0:
                     if int(board["board"][keys][-1]) == 10 * player:
-                        print("got cap pos keys at ", keys)  # ####################################################################
+                        # print("got cap pos keys at ", keys)  # ####################################################################
                         return keys
 
     def get_road_pieces():
@@ -356,7 +407,7 @@ def is_won():
 
     def sort_and_find_road():
         posits = get_road_pieces()
-        print("posits ", posits)  # ####################################################################
+        # print("posits ", posits)  # ####################################################################
         list_by_letters = []
         list_by_numbers = []
         for letter in letters:
@@ -364,7 +415,7 @@ def is_won():
             list_by_numbers.append([])
 
         def next_checker(points, ind_to_check, lischt):  # removes all elements from points which have no connections
-            print(f"running next checker with {points} {ind_to_check} {lischt}")  # ##################################################
+            # print(f"running next checker with {points} {ind_to_check} {lischt}")  # ##################################################
             buffer_list = []
             if len(points) == 1:
                 for elem in points:
@@ -386,7 +437,7 @@ def is_won():
                     delet_list.append(elem)
             for elem in delet_list:
                 points.remove(elem)
-            print(f" points now = {points}")
+            # print(f" points now = {points}")
 
         for nr in range(len(letters)):
             for point in posits:
@@ -413,7 +464,7 @@ def is_won():
             for lists in list_by_numbers:
                 next_checker(lists, 0, letters)
             next_list = list_by_letters + list_by_numbers
-            print("list by nr/lt ", list_by_letters, list_by_numbers)  # ##########################################################
+            # print("list by nr/lt ", list_by_letters, list_by_numbers)  # ##########################################################
             return next_list
 
     def get_groups(listt):
@@ -472,7 +523,7 @@ def is_won():
                 if ind1 == ind2:
                     ind1 = numbers.index(lichte[nr][1])
                     ind2 = numbers.index(lichte[nr + 1][1])
-                print(f"{lichte[nr]}, {lichte[nr + 1]}, {ind1}, {ind2}")
+                # print(f"{lichte[nr]}, {lichte[nr + 1]}, {ind1}, {ind2}")
                 if abs(ind1 - ind2) == 1:
                     if lichte[nr] not in split_group:
                         split_group.append(lichte[nr])
@@ -530,14 +581,17 @@ def is_won():
 
     next_list = sort_and_find_road()  # list_by letters + l_b_numbers
     next_list = cleaner(next_list)
+    counter = 0
 
     while len(get_groups(next_list)) != 0 and\
             get_groups(next_list) != [[]] and\
-            get_groups(next_list) != next_list:
+            get_groups(next_list) != next_list and\
+            counter < 100:
+        counter += 1
         next_list = get_groups(next_list)
         print("list with groups ", next_list)  # ####################################################################
 
-    print("B ", next_list)
+    # print("B ", next_list)
     dl_list = []
     for nr in range(len(next_list) - 1):
         for point in next_list[nr]:
@@ -553,7 +607,7 @@ def is_won():
                         break
     for elem in dl_list:
         next_list.remove(elem)
-    print("A ", next_list)
+    # print("A ", next_list)
 
     print("list with groups :)))", next_list)  # our final fuckn lst argrg
 
@@ -563,7 +617,7 @@ def is_won():
             condizio = False
             break
     if board["turn"] < board_size * 2 - 1:
-        print("too low turn")
+        # print("too low turn")
         return None
 
     elif stones_leftw == 0 or stones_leftb == 0:
@@ -579,18 +633,109 @@ def is_won():
 
 #
 # so now we know if won or not
-# like that we get human move:
 #
+
+# lets now make the generator for all moves
+#
+#
+#
+#
+
+def get_all_moves(bret):
+    bret1 = copy.deepcopy(bret)
+    bret_before_move = copy.deepcopy(bret1)
+    print_board(bret_before_move)
+    # yields all possible board positions after one move without actually doing the move
+    scrambled_keys = list(bret1["board"].keys())
+    random.shuffle(scrambled_keys)
+    for position in scrambled_keys:
+        if bret1["board"][position] == []:
+            # print("place() coming")  # #######################################################################
+            # go through all possible place()
+            for type in types:
+                if bret_before_move["turn"] < nr_before_normal:  # at beginning only place normal stones
+                    if type == "normal":
+                        place(bret1, position, type)
+                        # print_board(bret1)
+                        # print(bret1["turn"], bret_before_move["turn"])
+                        # print(bret1["turn"] > bret_before_move["turn"])
+                        if bret1["turn"] > bret_before_move["turn"]:  # if a move was made
+                            # print("move_was_made")
+                            # print("before ")
+                            # print_board(bret_before_move)
+                            bret_after_move = copy.deepcopy(bret1)
+                            # print("after ")
+                            # print_board(bret_after_move)
+                            bret1 = copy.deepcopy(bret_before_move)
+                            # print_board(bret1)
+                            print("placed")
+                            yield bret_after_move
+                else:
+                    place(bret1, position, type)
+                    # print_board(bret1)
+                    # print(bret1["turn"], bret_before_move["turn"])
+                    # print(bret1["turn"] > bret_before_move["turn"])
+                    if bret1["turn"] > bret_before_move["turn"]:  # if a move was made
+                        # print("move_was_made")
+                        # print("before ")
+                        # print_board(bret_before_move)
+                        bret_after_move = copy.deepcopy(bret1)
+                        # print("after ")
+                        # print_board(bret_after_move)
+                        bret1 = copy.deepcopy(bret_before_move)
+                        # print_board(bret1)
+                        print("placed")
+                        yield bret_after_move
+        else:
+            # go through all possible move()
+            # print("move coming !!!!!!!!!!!!!!!!")  # ##############################################################################
+            max_len = board_size
+            lennn = len(bret1["board"][position])
+            if lennn < board_size:
+                max_len = lennn
+            if max_len == 1:
+                drop_list = all_moves1
+            elif max_len == 2:
+                drop_list = all_moves2
+            elif max_len == 3:
+                drop_list = all_moves3
+            elif max_len == 4:
+                drop_list = all_moves4
+            elif max_len == 5:
+                drop_list = all_moves5
+            elif max_len == 6:
+                drop_list = all_moves6
+            # print(drop_list)  # ##################################################################
+            for direction in directions:
+                for drop_pattern in drop_list:
+                    bret_before_move = copy.deepcopy(bret1)
+                    move(bret1, position, direction, drop_pattern)
+                    if bret1["turn"] > bret_before_move["turn"]:  # if a move was made
+                        bret_after_move = copy.deepcopy(bret1)
+                        bret1 = copy.deepcopy(bret_before_move)
+                        # print_board(bret1)
+                        print("moved")
+                        yield bret_after_move
+
+
+#
+#
+#
+#
+#
+# like that we get human move:
+            #
 
 
 def get_human_move():
-    print_board()
+    global board
+    print_board(board)
     inputt = input("p/m? ")
     while inputt != "p" and inputt != "m":
         inputt = input("p/m? ")
     if inputt == "p":
         type = input("what type of stone? n/w/c ")
-        while len(type) < 1:
+        while type not in ["n", "c", "w"]:
             type = input("what type of stone? n/w/c ")
         if type == "n":
             type = "normal"
@@ -599,23 +744,23 @@ def get_human_move():
         elif type == "c":
             type = "capstone"
         abss = input("letter? ")
-        while len(abss) < 1:
+        while abss not in letters:
             abss = input("letter? ")
         bbs = input("number? ")
-        while len(bbs) < 1:
+        while bbs not in numbers:
             bbs = input("number? ")
         aabs = (abss, bbs)
-        place(aabs, type)
+        place(board, aabs, type)
     elif inputt == "m":
         abss = input("letter? ")
-        while len(abss) < 1:
+        while abss not in letters:
             abss = input("letter? ")
         bbs = input("number? ")
-        while len(bbs) < 1:
+        while bbs not in numbers:
             bbs = input("number? ")
         aabs = (abss, bbs)
         direct = input("direction? u/r/l/d ")
-        while len(direct) < 1:
+        while direct not in ["u", "r", "l", "d"]:
             direct = input("direction? u/r/l/d ")
         if direct == "u":
             direct = "up"
@@ -635,49 +780,95 @@ def get_human_move():
                 dropp.append(droplet)
             else:
                 break
-        move(aabs, direct, dropp)
+        move(board, aabs, direct, dropp)
 
 
 #
-place(("a", "0"), "normal")
-place(("a", "1"), "normal")
+# place(board, ("a", "0"), "normal")
+# place(board, ("a", "1"), "normal")
+#
+# place(board, ("b", "1"), "normal")
+# place(board, ("a", "3"), "normal")
+#
+# place(board, ("a", "2"), "normal")
+# place(board, ("b", "0"), "normal")
+#
+# place(board, ("a", "4"), "normal")
+# place(board, ("b", "2"), "normal")
+#
+# place(board, ("c", "1"), "normal")
+# place(board, ("b", "3"), "normal")
+#
+# place(board, ("c", "3"), "normal")
+# place(board, ("b", "4"), "normal")
+#
+# place(board, ("c", "4"), "normal")
+# place(board, ("c", "0"), "normal")
+#
+# place(board, ("d", "2"), "normal")
+# place(board, ("c", "2"), "normal")
+#
+# place(board, ("e", "0"), "normal")
+# place(board, ("d", "0"), "normal")
+#
+# place(board, ("e", "2"), "normal")
+# place(board, ("d", "1"), "normal")
+#
+# place(board, ("e", "4"), "normal")
+# place(board, ("d", "3"), "normal")
 
-place(("b", "1"), "normal")
-place(("a", "3"), "normal")
 
-place(("a", "2"), "normal")
-place(("b", "0"), "normal")
+winner = None
 
-place(("a", "4"), "normal")
-place(("b", "2"), "normal")
+while is_won(board) is None and winner != 1:
+    print("hello?1")
+    before_hum = copy.deepcopy(board)
+    while board == before_hum:
+        get_human_move()  # we get human move until a move was made
+    winner = is_won(board)  # if white has won pc will make move but then
+    # while loop will break
+    print("hello?2")
+    if winner != 1:
+        print("hello?3")
+        winning_move_made = 0
+        for new_board in get_all_moves(board):
+            if is_won(new_board) == 2:
+                board = new_board
+                winning_move_made = 1
+                break
+        print("hello4")            # if there is a winning move, break
+        if winning_move_made == 0:          # no winning move was made, therefore go through loop again
+            white_has_winning_move = 0
+            for new_board in get_all_moves(board):                  #
+                for board_after_white in get_all_moves(new_board):  # check if white has any winning moves after black move
+                    if is_won(board_after_white) == 1:              #
+                        white_has_winning_move = 1                  #
+                        break
+                if white_has_winning_move == 1:
+                    break
+            if white_has_winning_move == 1:
+                print("white has a winning move")
+                for new_board in get_all_moves(board):
+                    white_has_winning_move_for_that_board = 0               #
+                    for board_after_white in get_all_moves(new_board):  # for every new_board, if white has no winning moves,
+                        if is_won(board_after_white) == 1:                  # make move
+                            white_has_winning_move_for_that_board = 1       #
+                            break
+                    if white_has_winning_move_for_that_board == 0:         # make move as soon as found one move which has no winning moves for white
+                        board = new_board
+                        break
+            else:
+                print("white has no winning moves... supposedly")  # if white has no winning moves: check for winning moves for black :)
+                for new_board in get_all_moves(board):
+                    new_board["turn"] += 1
+                    for board_after_black in get_all_moves(new_board):  # for every new_board, if black has no winning moves,
+                        if is_won(board_after_black) == 2:
+                            new_board["turn"] -= 1
+                            board = new_board                       # make move
+                            winning_move_made = 1
+                            break
+                if winning_move_made == 0:                                   # if there arent any winning moves for anyone, no one cares *shrug*
+                    board = next(get_all_moves(board))
 
-place(("c", "1"), "normal")
-place(("b", "3"), "normal")
 
-place(("c", "3"), "normal")
-place(("b", "4"), "normal")
-
-place(("c", "4"), "normal")
-place(("c", "0"), "normal")
-
-place(("d", "2"), "normal")
-place(("c", "2"), "normal")
-
-place(("e", "0"), "normal")
-place(("d", "0"), "normal")
-
-place(("e", "2"), "normal")
-place(("d", "1"), "normal")
-
-place(("e", "4"), "normal")
-place(("d", "3"), "normal")
-
-
-while True:
-    get_human_move()
-    print(is_won())
-    print("""
-        winner?
-        """,
-          is_won()
-          )
+print(f"{is_won(board)} has won! gg ^^")
