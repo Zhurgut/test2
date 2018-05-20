@@ -30,7 +30,7 @@ import random
 
 # config:
 
-board_size = 4
+board_size = 5
 nr_before_normal = 15  # nr of turn before which the bot only places normal stones
 
 # end of config
@@ -116,7 +116,7 @@ all_moves4 = get_moves_list(4)
 all_moves5 = get_moves_list(5)
 all_moves6 = get_moves_list(6)
 
-types = {"normal", "capstone", "wall"}
+types = ["normal", "capstone", "wall"]
 
 
 def print_board(boardd):
@@ -125,7 +125,6 @@ def print_board(boardd):
     for key in boardd["board"]:
         if len(boardd["board"][key]) > max_length:
             max_length = len(boardd["board"][key])
-    max_length += 1
     print("turn nr: ", boardd["turn"])
     print("white_stones", boardd["white_stones"])
     print("black_stones", boardd["black_stones"])
@@ -135,14 +134,14 @@ def print_board(boardd):
     line_list = []
     line_list.append(f"     0")
     for line in numbers[1:]:
-        line_list.append(round(max_length * 4) * " " + f"{line}")
+        line_list.append(((max_length * 5) + 6) * " " + f"{line}")
     print(line_list)
     for column in letters:
         col_list = []
         col_list.append(column)
         for line in numbers:
             col_list.append(boardd["board"][(column, line)])
-            _ = ((max_length - len(boardd["board"][(column, line)])) * 3) * " "
+            _ = (((max_length - len(boardd["board"][(column, line)])) * 5) + 3) * " "
             col_list.append(_)
         print(col_list)
         print()
@@ -152,7 +151,7 @@ def print_board(boardd):
 # initial stuff
 #
 #
-# now come place and move
+# now come place() and move()
 #
 #
 
@@ -555,9 +554,9 @@ def is_won(board):
             horiz = right + left
             # print("cond for wall thing ", vert == 2 or horiz == 2, player)  # ########################################################
             if vert == 2 or horiz == 2:
-                print("player won")
+                # print("player won")  # #########################################################
                 return player
-        print("there no road")   # ####################################################################
+        # print("there no road")   # ####################################################################
         return None
 
     def whohasmoretopstones():
@@ -570,13 +569,13 @@ def is_won(board):
                 elif int(board["board"][keys][-1]) == 2:
                     resultsb.append(keys)
         if len(resultsw) > len(resultsb):
-            print("white more stones")   # ####################################################################
+            # print("white more stones")   # ####################################################################
             return 1
         elif len(resultsw) < len(resultsb):
-            print("black more stones")   # ####################################################################
+            # print("black more stones")   # ####################################################################
             return 2
         else:
-            print("draw")   # ####################################################################
+            # print("draw")   # ####################################################################
             return None
 
     next_list = sort_and_find_road()  # list_by letters + l_b_numbers
@@ -589,7 +588,7 @@ def is_won(board):
             counter < 100:
         counter += 1
         next_list = get_groups(next_list)
-        print("list with groups ", next_list)  # ####################################################################
+        # print("list with groups ", next_list)  # ####################################################################
 
     # print("B ", next_list)
     dl_list = []
@@ -609,7 +608,7 @@ def is_won(board):
         next_list.remove(elem)
     # print("A ", next_list)
 
-    print("list with groups :)))", next_list)  # our final fuckn lst argrg
+    # print("list with groups :)))", next_list)  # our final fuckn lst argrg
 
     condizio = True
     for keys in board["board"].keys():
@@ -621,13 +620,13 @@ def is_won(board):
         return None
 
     elif stones_leftw == 0 or stones_leftb == 0:
-        print("Either no more stones")
+        # print("Either no more stones")
         return whohasmoretopstones()
     elif condizio:
-        print("condizio")
+        # print("condizio")
         return whohasmoretopstones()
     else:
-        print("theres a road maybe?")
+        # print("theres a road maybe?")
         return is_road(next_list)
 
 
@@ -644,7 +643,7 @@ def is_won(board):
 def get_all_moves(bret):
     bret1 = copy.deepcopy(bret)
     bret_before_move = copy.deepcopy(bret1)
-    print_board(bret_before_move)
+    # print_board(bret_before_move)  # #######################################################
     # yields all possible board positions after one move without actually doing the move
     scrambled_keys = list(bret1["board"].keys())
     random.shuffle(scrambled_keys)
@@ -668,7 +667,7 @@ def get_all_moves(bret):
                             # print_board(bret_after_move)
                             bret1 = copy.deepcopy(bret_before_move)
                             # print_board(bret1)
-                            print("placed")
+                            # print("placed")
                             yield bret_after_move
                 else:
                     place(bret1, position, type)
@@ -684,7 +683,7 @@ def get_all_moves(bret):
                         # print_board(bret_after_move)
                         bret1 = copy.deepcopy(bret_before_move)
                         # print_board(bret1)
-                        print("placed")
+                        # print("placed")
                         yield bret_after_move
         else:
             # go through all possible move()
@@ -714,7 +713,7 @@ def get_all_moves(bret):
                         bret_after_move = copy.deepcopy(bret1)
                         bret1 = copy.deepcopy(bret_before_move)
                         # print_board(bret1)
-                        print("moved")
+                        # print("moved")  # #####################################################################
                         yield bret_after_move
 
 
@@ -783,21 +782,21 @@ def get_human_move():
         move(board, aabs, direct, dropp)
 
 
-#
 # place(board, ("a", "0"), "normal")
 # place(board, ("a", "1"), "normal")
-#
-# place(board, ("b", "1"), "normal")
-# place(board, ("a", "3"), "normal")
-#
-# place(board, ("a", "2"), "normal")
+# # move(board, ("a", "0"), "right", [1])
+# # #
 # place(board, ("b", "0"), "normal")
-#
-# place(board, ("a", "4"), "normal")
+# place(board, ("a", "3"), "normal")
+# # move(board, ("a", "1"), "down", [2])
+# place(board, ("c", "0"), "normal")
+# place(board, ("b", "1"), "normal")
+# # #
+# place(board, ("d", "0"), "normal")
 # place(board, ("b", "2"), "normal")
-#
-# place(board, ("c", "1"), "normal")
-# place(board, ("b", "3"), "normal")
+# # #
+# place(board, ("e", "0"), "normal")
+
 #
 # place(board, ("c", "3"), "normal")
 # place(board, ("b", "4"), "normal")
@@ -816,7 +815,7 @@ def get_human_move():
 #
 # place(board, ("e", "4"), "normal")
 # place(board, ("d", "3"), "normal")
-
+print("winner", type(is_won(board)))
 
 winner = None
 
@@ -826,6 +825,15 @@ while is_won(board) is None and winner != 1:
         get_human_move()  # we get human move until a move was made
     winner = is_won(board)  # if white has won pc will make move but then
     # while loop will break
+
+    print("""
+                                THE WINNER IIISIIISIISIISISISISI...
+
+                        ITS THE WINNER WHO IS...
+
+
+                                """, is_won(board)
+          )
     if winner != 1:
         winning_move_made = 0
         for new_board in get_all_moves(board):
@@ -833,6 +841,59 @@ while is_won(board) is None and winner != 1:
                 board = new_board
                 winning_move_made = 1
                 break  # if there is a winning move, break
+
+        if winning_move_made == 0:
+            white_has_winning_move = 0
+            buffer_board = copy.deepcopy(board)
+            for new_board in get_all_moves(board):
+                for board_after_white in get_all_moves(new_board):  # check if white has any winning moves after black move
+                    if is_won(board_after_white) == 1:              #
+                        white_has_winning_move = 1
+                        print("""
+                            HIaiaiasidfaisdfidfaidfiadjfoasdfaosidfas
+
+
+
+                            careeeful now!!!
+
+                            """)                  #
+                        break
+                if white_has_winning_move == 1:
+                    break
+            if white_has_winning_move == 1:
+                print("                                             white has a winning move")
+                no_white_winning = []                               # if white does have winning moves after blacks move, we append black's move to that list
+                for new_board in get_all_moves(board):
+                    white_has_winning_move_for_that_board = 0               #
+                    for board_after_white in get_all_moves(new_board):  # for every new_board, check if white has no winning moves,
+                        if is_won(board_after_white) == 1:                  #
+                            white_has_winning_move_for_that_board = 1       #
+                            break
+                    if white_has_winning_move_for_that_board == 0:         # append new_board to list with all boards where white can not win as soon as
+                        no_white_winning.append(new_board)                      # found one move which has no winning moves for white
+                last_counter = 0
+                for new_board in no_white_winning:
+                    counter = 0
+                    new_board["turn"] += 1
+                    for board_after_black in get_all_moves(new_board):  # for every baord where white cannot win it counts how many threatening moves
+                        if is_won(board_after_black) == 2:  # black has, when black has the most possible threatening moves, play
+                            counter += 1
+                    if counter > last_counter:
+                        new_board["turn"] -= 1
+                        buffer_board = copy.deepcopy(new_board)
+                        last_counter = copy.copy(counter)
+            if buffer_board != board:
+                print("""
+                    using bufferboard
+                    hellooooo
+                    ?
+                    ?
+
+                    ???????????????????????????????????????????????????????????????????????????
+                """)
+                board = buffer_board
+                winning_move_made = 1
+
         if winning_move_made == 0:          # no winning move was made, therefore go through loop again
             white_has_winning_move = 0
             for new_board in get_all_moves(board):                  #
@@ -844,41 +905,56 @@ while is_won(board) is None and winner != 1:
                     break
             if white_has_winning_move == 1:
                 print("white has a winning move")
-                no_white_winning = []
+                no_white_winning = []                               # if white does have winning moves after blacks move, we append black's move to that list
                 for new_board in get_all_moves(board):
                     white_has_winning_move_for_that_board = 0               #
                     for board_after_white in get_all_moves(new_board):  # for every new_board, check if white has no winning moves,
                         if is_won(board_after_white) == 1:                  #
                             white_has_winning_move_for_that_board = 1       #
                             break
-                    if white_has_winning_move_for_that_board == 0:         # append new_board to list with all board where white can not win as soon as
-                                                                            # found one move which has no winning moves for white
-                        no_white_winning.append(new_board)
+                    if white_has_winning_move_for_that_board == 0:         # append new_board to list with all boards where white can not win, as soon as
+                        no_white_winning.append(new_board)                      # found one move which has no winning moves for white
                 for new_board in no_white_winning:
                     new_board["turn"] += 1
                     for board_after_black in get_all_moves(new_board):
                         if is_won(board_after_black) == 2:
                             new_board["turn"] -= 1
-                            board = new_board                       # if a board where white cannot win has a possibility fo winning for black play it
+                            board = new_board                       # if a board where white cannot win has a possibility of winning for black play it
                             winning_move_made = 1
                             break
                 if winning_move_made == 0:
-                    if len(no_white_winning) > 0:        # there are no new_board where neither black nor white can win
+                    if len(no_white_winning) > 0:        # there are no new_board where either black or white can win
                         no_white_winning[0]["turn"] -= 1
                         board = no_white_winning[0]  # just move where white cant win
+                        winning_move_made = 1
                 else:
-                    print(" I resign ")
-            else:
-                print("white has no winning moves... supposedly")  # if white has no winning moves: check for winning moves for black :)
+                    print(" IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII resign ")
+                    board = next(get_all_moves(board))   # black cant stop defeat because after each move, white has a winning move
+            else:                                           # white has no winning moves
+                last_counter2 = 0
+                buffer_board2 = copy.deepcopy(board)
                 for new_board in get_all_moves(board):
+                    counter2 = 0
                     new_board["turn"] += 1
-                    for board_after_black in get_all_moves(new_board):  # for every new_board, if black has no winning moves,
-                        if is_won(board_after_black) == 2:
-                            new_board["turn"] -= 1
-                            board = new_board                       # make move
-                            winning_move_made = 1
-                            break
-                if winning_move_made == 0:                                   # if there arent any winning moves for anyone, no one cares *shrug*
+                    for board_after_black in get_all_moves(new_board):  # for every baord (where white cannot win) it counts how many threatening moves
+                        if is_won(board_after_black) == 2:  # black has, when black has the most possible threatening moves, play
+                            counter2 += 1
+                    if counter2 > last_counter2:
+                        new_board["turn"] -= 1
+                        buffer_board2 = copy.deepcopy(new_board)
+                        last_counter2 = copy.copy(counter2)
+                if buffer_board2 != board:
+                    print("""
+                        using bufferboard2
+                        hellooooo
+                        ?
+                        ?
+
+                        ???????????????????????????????????????????????????????????????????????????
+                    """)
+                    board = buffer_board
+                    winning_move_made = 1
+                if winning_move_made == 0:    # if there arent any winning moves for anyone, no one cares *shrug*
                     board = next(get_all_moves(board))
 
 print_board(board)
