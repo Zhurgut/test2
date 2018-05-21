@@ -31,7 +31,7 @@ import random
 # config:
 
 board_size = 5
-nr_before_normal = 15  # nr of turn before which the bot only places normal stones
+nr_before_normal = 2 * board_size - 1  # nr of turn before which the bot only places normal stones in rows b and c
 
 # end of config
 
@@ -170,7 +170,7 @@ def place(board, pos, what_stone):
                     board["black_stones"] -= 1
                 else:
                     check = 1
-                    print("no more stones left")
+                    # print("no more stones left")
 
             elif what_stone == "wall":
                 stone = -1 * player
@@ -180,7 +180,7 @@ def place(board, pos, what_stone):
                     board["black_stones"] -= 1
                 else:
                     check = 1
-                    print("no more stones left")
+                    # print("no more stones left")
 
             elif what_stone == "capstone":
                 stone = str(10 * player)
@@ -190,7 +190,7 @@ def place(board, pos, what_stone):
                     board["black_capstones"] -= 1
                 else:
                     check = 1
-                    print("no more stones left")
+                    # print("no more stones left")
 
             if stone != 0 and check == 0:
                 board["board"][pos].append(stone)
@@ -645,46 +645,39 @@ def get_all_moves(bret):
     bret_before_move = copy.deepcopy(bret1)
     # print_board(bret_before_move)  # #######################################################
     # yields all possible board positions after one move without actually doing the move
-    scrambled_keys = list(bret1["board"].keys())
-    random.shuffle(scrambled_keys)
+    scrambled_keys_old = list(bret1["board"].keys())
+    random.shuffle(scrambled_keys_old)
+    b_and_cs = []
+    emptis = []
+    rest = []
+    for feld in scrambled_keys_old:
+        if bret1["board"][feld] == [] and (feld[0] == "b" or feld[0] == "1"):
+            b_and_cs.append(feld)
+        elif bret1["board"][feld] == []:
+            emptis.append(feld)
+        else:
+            rest.append(feld)
+    scrambled_keys = b_and_cs + emptis + rest
     for position in scrambled_keys:
         if bret1["board"][position] == []:
-            # print("place() coming")  # #######################################################################
+            # print("place() coming")  # ###################################
             # go through all possible place()
             for type in types:
-                if bret_before_move["turn"] < nr_before_normal:  # at beginning only place normal stones
-                    if type == "normal":
-                        place(bret1, position, type)
-                        # print_board(bret1)
-                        # print(bret1["turn"], bret_before_move["turn"])
-                        # print(bret1["turn"] > bret_before_move["turn"])
-                        if bret1["turn"] > bret_before_move["turn"]:  # if a move was made
-                            # print("move_was_made")
-                            # print("before ")
-                            # print_board(bret_before_move)
-                            bret_after_move = copy.deepcopy(bret1)
-                            # print("after ")
-                            # print_board(bret_after_move)
-                            bret1 = copy.deepcopy(bret_before_move)
-                            # print_board(bret1)
-                            # print("placed")
-                            yield bret_after_move
-                else:
-                    place(bret1, position, type)
+                place(bret1, position, type)
+                # print_board(bret1)
+                # print(bret1["turn"], bret_before_move["turn"])
+                # print(bret1["turn"] > bret_before_move["turn"])
+                if bret1["turn"] > bret_before_move["turn"]:  # if a move was made
+                    # print("move_was_made")
+                    # print("before ")
+                    # print_board(bret_before_move)
+                    bret_after_move = copy.deepcopy(bret1)
+                    # print("after ")
+                    # print_board(bret_after_move)
+                    bret1 = copy.deepcopy(bret_before_move)
                     # print_board(bret1)
-                    # print(bret1["turn"], bret_before_move["turn"])
-                    # print(bret1["turn"] > bret_before_move["turn"])
-                    if bret1["turn"] > bret_before_move["turn"]:  # if a move was made
-                        # print("move_was_made")
-                        # print("before ")
-                        # print_board(bret_before_move)
-                        bret_after_move = copy.deepcopy(bret1)
-                        # print("after ")
-                        # print_board(bret_after_move)
-                        bret1 = copy.deepcopy(bret_before_move)
-                        # print_board(bret1)
-                        # print("placed")
-                        yield bret_after_move
+                    # print("placed")
+                    yield bret_after_move
         else:
             # go through all possible move()
             # print("move coming !!!!!!!!!!!!!!!!")  # ##############################################################################
@@ -903,11 +896,34 @@ while is_won(board) is None and winner != 1:
                           len(no_white_winning))
                     if len(no_white_winning) > 0:
                         print("white can't win here:")
-                        print_board(no_white_winning[0])        # there are no new_board where either black or white can win
+                        print_board(no_white_winning[0])        # there are no new_board where either black or white can win if white has a winning move
                         no_white_winning[0]["turn"] -= 1
                         board = no_white_winning[0]  # just move where white cant win
                         winning_move_made = 1
                         print(" I DID That thing as if no board had winning stuff for black")
+            else:  # if white has no winning moves, we still want to look for threatening moves for black
+                last_counter2 = 0
+                for new_board in get_all_moves(board):
+                    counter2 = 0
+                    new_board["turn"] += 1
+                    for board_after_black in get_all_moves(new_board):  # for every baord where white cannot win it counts how many threatening moves
+                        if is_won(board_after_black) == 2:  # black has, when black has the most possible threatening moves, play
+                            counter2 += 1
+                    if counter2 > last_counter2:
+                        new_board["turn"] -= 1
+                        buffer_board = copy.deepcopy(new_board)
+                        last_counter2 = copy.copy(counter2)
+                if buffer_board != board:
+                    print("""
+                        using bufferboard where white has no winning moves, but black does
+                        hellooooo
+                        ?
+                        ?
+
+                        ???????????????????????????????????????????????????????????????????????????
+                    """)
+                    board = buffer_board
+                    winning_move_made = 1
 
             if winning_move_made == 0:
                 print("""
