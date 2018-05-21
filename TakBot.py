@@ -543,11 +543,11 @@ def is_won(board):
             for elem in groups:
                 if elem[0] == "a":
                     top = 1
-                elif elem[0] == letters[-1]:
+                if elem[0] == letters[-1]:
                     bottom = 1
-                elif elem[1] == "0":
+                if elem[1] == "0":
                     left = 1
-                elif elem[1] == numbers[-1]:
+                if elem[1] == numbers[-1]:
                     right = 1
             # print("top bot lef rig", top, bottom, left, right)  # ####################################################################
             vert = top + bottom
@@ -782,30 +782,30 @@ def get_human_move():
         move(board, aabs, direct, dropp)
 
 
-# place(board, ("a", "0"), "normal")
+# place(board, ("c", "0"), "normal")
 # place(board, ("a", "1"), "normal")
-# # move(board, ("a", "0"), "right", [1])
-# # #
-# place(board, ("b", "0"), "normal")
-# place(board, ("a", "3"), "normal")
-# # move(board, ("a", "1"), "down", [2])
-# place(board, ("c", "0"), "normal")
-# place(board, ("b", "1"), "normal")
-# # #
-# place(board, ("d", "0"), "normal")
-# place(board, ("b", "2"), "normal")
-# # #
-# place(board, ("e", "0"), "normal")
-
-#
-# place(board, ("c", "3"), "normal")
-# place(board, ("b", "4"), "normal")
-#
-# place(board, ("c", "4"), "normal")
-# place(board, ("c", "0"), "normal")
-#
+# # # move(board, ("a", "0"), "right", [1])
+# # # #
 # place(board, ("d", "2"), "normal")
+# place(board, ("a", "3"), "normal")
+# # # move(board, ("a", "1"), "down", [2])
+# place(board, ("c", "1"), "normal")
+# place(board, ("b", "1"), "normal")
+# # # #
 # place(board, ("c", "2"), "normal")
+# place(board, ("b", "2"), "normal")
+# # # #
+# # place(board, ("e", "0"), "normal")
+#
+# #
+# place(board, ("e", "2"), "normal")
+# place(board, ("b", "4"), "normal")
+# #
+# place(board, ("e", "3"), "normal")
+# place(board, ("c", "4"), "normal")
+# #
+# place(board, ("e", "4"), "normal")
+# # place(board, ("c", "2"), "normal")
 #
 # place(board, ("e", "0"), "normal")
 # place(board, ("d", "0"), "normal")
@@ -815,7 +815,9 @@ def get_human_move():
 #
 # place(board, ("e", "4"), "normal")
 # place(board, ("d", "3"), "normal")
-print("winner", type(is_won(board)))
+# print("winner", type(is_won(board)))
+# print(letters[-1], numbers[-1])
+# print(is_won(board))
 
 winner = None
 
@@ -869,8 +871,10 @@ while is_won(board) is None and winner != 1:
                         if is_won(board_after_white) == 1:                  #
                             white_has_winning_move_for_that_board = 1       #
                             break
-                    if white_has_winning_move_for_that_board == 0:         # append new_board to list with all boards where white can not win as soon as
-                        no_white_winning.append(new_board)                      # found one move which has no winning moves for white
+                    if white_has_winning_move_for_that_board == 0:    # append new_board to list with all boards where white can not win as soon as
+                        no_white_winning.append(new_board)
+                for elem in no_white_winning:                    # found one move which has no winning moves for white
+                    print_board(elem)
                 last_counter = 0
                 for new_board in no_white_winning:
                     counter = 0
@@ -882,70 +886,9 @@ while is_won(board) is None and winner != 1:
                         new_board["turn"] -= 1
                         buffer_board = copy.deepcopy(new_board)
                         last_counter = copy.copy(counter)
-            if buffer_board != board:
-                print("""
-                    using bufferboard
-                    hellooooo
-                    ?
-                    ?
-
-                    ???????????????????????????????????????????????????????????????????????????
-                """)
-                board = buffer_board
-                winning_move_made = 1
-
-        if winning_move_made == 0:          # no winning move was made, therefore go through loop again
-            white_has_winning_move = 0
-            for new_board in get_all_moves(board):                  #
-                for board_after_white in get_all_moves(new_board):  # check if white has any winning moves after black move
-                    if is_won(board_after_white) == 1:              #
-                        white_has_winning_move = 1                  #
-                        break
-                if white_has_winning_move == 1:
-                    break
-            if white_has_winning_move == 1:
-                print("white has a winning move")
-                no_white_winning = []                               # if white does have winning moves after blacks move, we append black's move to that list
-                for new_board in get_all_moves(board):
-                    white_has_winning_move_for_that_board = 0               #
-                    for board_after_white in get_all_moves(new_board):  # for every new_board, check if white has no winning moves,
-                        if is_won(board_after_white) == 1:                  #
-                            white_has_winning_move_for_that_board = 1       #
-                            break
-                    if white_has_winning_move_for_that_board == 0:         # append new_board to list with all boards where white can not win, as soon as
-                        no_white_winning.append(new_board)                      # found one move which has no winning moves for white
-                for new_board in no_white_winning:
-                    new_board["turn"] += 1
-                    for board_after_black in get_all_moves(new_board):
-                        if is_won(board_after_black) == 2:
-                            new_board["turn"] -= 1
-                            board = new_board                       # if a board where white cannot win has a possibility of winning for black play it
-                            winning_move_made = 1
-                            break
-                if winning_move_made == 0:
-                    if len(no_white_winning) > 0:        # there are no new_board where either black or white can win
-                        no_white_winning[0]["turn"] -= 1
-                        board = no_white_winning[0]  # just move where white cant win
-                        winning_move_made = 1
-                else:
-                    print(" IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII resign ")
-                    board = next(get_all_moves(board))   # black cant stop defeat because after each move, white has a winning move
-            else:                                           # white has no winning moves
-                last_counter2 = 0
-                buffer_board2 = copy.deepcopy(board)
-                for new_board in get_all_moves(board):
-                    counter2 = 0
-                    new_board["turn"] += 1
-                    for board_after_black in get_all_moves(new_board):  # for every baord (where white cannot win) it counts how many threatening moves
-                        if is_won(board_after_black) == 2:  # black has, when black has the most possible threatening moves, play
-                            counter2 += 1
-                    if counter2 > last_counter2:
-                        new_board["turn"] -= 1
-                        buffer_board2 = copy.deepcopy(new_board)
-                        last_counter2 = copy.copy(counter2)
-                if buffer_board2 != board:
+                if buffer_board != board:
                     print("""
-                        using bufferboard2
+                        using bufferboard
                         hellooooo
                         ?
                         ?
@@ -954,8 +897,25 @@ while is_won(board) is None and winner != 1:
                     """)
                     board = buffer_board
                     winning_move_made = 1
-                if winning_move_made == 0:    # if there arent any winning moves for anyone, no one cares *shrug*
-                    board = next(get_all_moves(board))
+
+                if winning_move_made == 0:
+                    print(" so many ways to block white from winning",
+                          len(no_white_winning))
+                    if len(no_white_winning) > 0:
+                        print("white can't win here:")
+                        print_board(no_white_winning[0])        # there are no new_board where either black or white can win
+                        no_white_winning[0]["turn"] -= 1
+                        board = no_white_winning[0]  # just move where white cant win
+                        winning_move_made = 1
+                        print(" I DID That thing as if no board had winning stuff for black")
+
+            if winning_move_made == 0:
+                print("""
+                                my guess is there arent any good moves or something on the lines of that
+
+
+                                """)   # if there arent any winning moves for anyone, no one cares *shrug*
+                board = next(get_all_moves(board))
 
 print_board(board)
 print(f"{is_won(board)} has won! gg ^^")
