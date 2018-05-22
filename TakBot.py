@@ -866,72 +866,74 @@ while is_won(board) is None and winner != 1:
                             break
                     if white_has_winning_move_for_that_board == 0:    # append new_board to list with all boards where white can not win as soon as
                         no_white_winning.append(new_board)
-                for elem in no_white_winning:                    # found one move which has no winning moves for white
-                    print_board(elem)
-                last_counter = 0
-                for new_board in no_white_winning:
-                    counter = 0
-                    new_board["turn"] += 1
-                    for board_after_black in get_all_moves(new_board):  # for every baord where white cannot win it counts how many threatening moves
-                        if is_won(board_after_black) == 2:  # black has, when black has the most possible threatening moves, play
-                            counter += 1
-                    if counter > last_counter:
-                        new_board["turn"] -= 1
-                        buffer_board = copy.deepcopy(new_board)
-                        last_counter = copy.copy(counter)
-                if buffer_board != board:
-                    print("""
-                        using bufferboard
-                        hellooooo
-                        ?
-                        ?
 
-                        ???????????????????????????????????????????????????????????????????????????
-                    """)
-                    board = buffer_board
-                    winning_move_made = 1
+# here we have all boards where white cannot win.
+# now we determine the category of our strongest moves in no_white_winning
+# 1 I can threaten but enemy can't
+# 2 I can threaten but enemy can too
+# 3 I can't threaten but at least enemy can't either
+# 4 I can't threaten but my enemy can
 
-                if winning_move_made == 0:
-                    print(" so many ways to block white from winning",
-                          len(no_white_winning))
-                    if len(no_white_winning) > 0:
-                        print("white can't win here:")
-                        print_board(no_white_winning[0])        # there are no new_board where either black or white can win if white has a winning move
-                        no_white_winning[0]["turn"] -= 1
-                        board = no_white_winning[0]  # just move where white cant win
-                        winning_move_made = 1
-                        print(" I DID That thing as if no board had winning stuff for black")
-            else:  # if white has no winning moves, we still want to look for threatening moves for black
-                last_counter2 = 0
-                for new_board in get_all_moves(board):
-                    counter2 = 0
-                    new_board["turn"] += 1
-                    for board_after_black in get_all_moves(new_board):  # for every baord where white cannot win it counts how many threatening moves
-                        if is_won(board_after_black) == 2:  # black has, when black has the most possible threatening moves, play
-                            counter2 += 1
-                    if counter2 > last_counter2:
-                        new_board["turn"] -= 1
-                        buffer_board = copy.deepcopy(new_board)
-                        last_counter2 = copy.copy(counter2)
-                if buffer_board != board:
-                    print("""
-                        using bufferboard where white has no winning moves, but black does
-                        hellooooo
-                        ?
-                        ?
+            category = 4
+            for move_board in no_white_winning:
+                new_cat = get_cat(move_board)
+                if new_cat < category:
+                    category = copy.copy(new_cat)
+                if category == 1:
+                    break
+# now we have determined the best category of our moves. each category we handle somewhat differently
+            if category == 1:
+                all_cat_1_moves = []
+                for move_board in no_white_winning:
+                    if get_cat(move_board) == 1:
+                        all_cat_1_moves.append(move_board)  # now we have all the moves we must consider for the next step
+                # we want to find all boards where white can only make moves of cat 4
 
-                        ???????????????????????????????????????????????????????????????????????????
-                    """)
-                    board = buffer_board
-                    winning_move_made = 1
+                for move_board in all_cat_1_moves:
+                    all_cat_4_for_that_move_board = []
+                    for board_after_white in get_all_moves(move_board):
+                        broken = 0
+                        if get_cat(board_after_white) < 4:
+                            broken = 1
+                            break
+                        else:
+                            all_cat_4_for_that_move_board.append(board_after_white)
+                    avg_nr_of_threats = 0
+                    if len(all_cat_4_for_that_move_board) > 0 and broken == 0:     # if there are moves where white can only respond with cat 4 moves
+                        nr_of_threats = 0
+                        for board_after_white in all_cat_4_for_that_move_board:
+                            nr_of_threats += get_nr_of_threats(board_after_white)
+                        new_avg_of_threats = nr_of_threats /\
+                            len(all_cat_4_for_that_move_board)
+                        if new_avg_of_threats > avg_nr_of_threats:
+                            avg_nr_of_threats = copy.copy(new_avg_of_threats)
+                            buffer_board = copy.deepcopy(move_board)
+                if buffer_board == board:  # there are cat 3 moves for every one of blacks moves, buffer_board has not changed
+                    nr_of_3_moves = 10000
+                    for move_board in all_cat_1_moves:      # we want to find the board for which there are the least 3 mvs
+                        new_nr_of_3_moves = 0
+                        for board_after_white in get_all_moves(move_board):
+                            if get_cat(board_after_white) < 4:
+                                new_nr_of_3_moves += 1
+                        if new_nr_of_3_moves < nr_of_3_moves:
+                            nr_of_3_moves = copy.copy(new_nr_of_3_moves)
+                            buffer_board = copy.deepcopy(move_board)
 
-            if winning_move_made == 0:
-                print("""
-                                my guess is there arent any good moves or something on the lines of that
+            elif category == 2:
+                all_cat_2_moves = []
+                for move_board in no_white_winning:
+                    if get_cat(move_board) == 2:
+                        all_cat_2_moves.append(move_board)  # now we have all the moves we must consider for the next step
 
+            elif category == 3:
+                all_cat_3_moves = []
+                for move_board in no_white_winning:
+                    if get_cat(move_board) == 3:
+                        all_cat_3_moves.append(move_board)  # now we have all the moves we must consider for the next step
 
-                                """)   # if there arent any winning moves for anyone, no one cares *shrug*
-                board = next(get_all_moves(board))
+            else:
+                all_cat_4_moves = no_white_winning  # now we have all the moves we must consider for the next step
+
 
 print_board(board)
 print(f"{is_won(board)} has won! gg ^^")
