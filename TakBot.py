@@ -775,6 +775,41 @@ def get_human_move():
         move(board, aabs, direct, dropp)
 
 
+def get_cat(brett):
+    player_to_play = (brett["turn"] % 2) + 1
+    player_just_played = 3 - player_to_play
+
+    def am_i_threatening():
+        brett["turn"] -= 1
+        for moves in get_all_moves(brett):
+            if is_won(moves) == player_just_played:
+                brett["turn"] += 1
+                return 0
+        brett["turn"] += 1
+        return 2
+
+    def can_he_threaten():
+        for move in get_all_moves(brett):
+            move["turn"] -= 1
+            for second_move in get_all_moves(move):
+                if is_won(second_move) == player_to_play:
+                    return 2
+        return 1
+
+    return am_i_threatening() + can_he_threaten()
+
+
+def get_nr_of_threats(brett):
+    nr_of_threats = 0
+    player = (brett["turn"] % 2) + 1
+    for move in get_all_moves(brett):
+        move["turn"] -= 1
+        for second_move in get_all_moves(move):
+            if is_won(second_move) == player:
+                nr_of_threats += 1
+    return nr_of_threats
+
+
 # place(board, ("c", "0"), "normal")
 # place(board, ("a", "1"), "normal")
 # # # move(board, ("a", "0"), "right", [1])
@@ -811,6 +846,7 @@ def get_human_move():
 # print("winner", type(is_won(board)))
 # print(letters[-1], numbers[-1])
 # print(is_won(board))
+
 
 winner = None
 
@@ -869,8 +905,8 @@ while is_won(board) is None and winner != 1:
 
 # here we have all boards where white cannot win.
 # now we determine the category of our strongest moves in no_white_winning
-# 1 I can threaten but enemy can't
-# 2 I can threaten but enemy can too
+# 1 I threaten but enemy can't
+# 2 I threaten but enemy can too
 # 3 I can't threaten but at least enemy can't either
 # 4 I can't threaten but my enemy can
 
@@ -888,18 +924,17 @@ while is_won(board) is None and winner != 1:
                     if get_cat(move_board) == 1:
                         all_cat_1_moves.append(move_board)  # now we have all the moves we must consider for the next step
                 # we want to find all boards where white can only make moves of cat 4
-
+                avg_nr_of_threats = 0
                 for move_board in all_cat_1_moves:
                     all_cat_4_for_that_move_board = []
+                    broken = 0
                     for board_after_white in get_all_moves(move_board):
-                        broken = 0
                         if get_cat(board_after_white) < 4:
                             broken = 1
                             break
                         else:
                             all_cat_4_for_that_move_board.append(board_after_white)
-                    avg_nr_of_threats = 0
-                    if len(all_cat_4_for_that_move_board) > 0 and broken == 0:     # if there are moves where white can only respond with cat 4 moves
+                    if len(all_cat_4_for_that_move_board) > 0 and broken == 0:     # if there are moves where white can only (!) respond with cat 4 moves
                         nr_of_threats = 0
                         for board_after_white in all_cat_4_for_that_move_board:
                             nr_of_threats += get_nr_of_threats(board_after_white)
