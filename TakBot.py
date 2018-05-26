@@ -30,7 +30,7 @@ import random
 
 # config:
 
-board_size = 5
+board_size = 4
 nr_before_normal = 2 * board_size - 1  # nr of turn before which the bot only places normal stones in rows b and c
 
 # end of config
@@ -775,199 +775,123 @@ def get_human_move():
         move(board, aabs, direct, dropp)
 
 
-def get_cat(brett):
-    player_to_play = (brett["turn"] % 2) + 1
-    player_just_played = 3 - player_to_play
+def get_value(bret):
+    road_stones_w = 0
+    road_stones_b = 0
+    stones_in_stack_w = 0
+    stones_in_stack_b = 0
+    stones_under_cap_w = 0
+    stones_under_cap_b = 0
+    moves_to_win_w = 3
+    moves_to_win_b = 3
 
-    def am_i_threatening():
-        brett["turn"] -= 1
-        for moves in get_all_moves(brett):
-            if is_won(moves) == player_just_played:
-                brett["turn"] += 1
-                return 0
-        brett["turn"] += 1
-        return 2
+    for pos in bret["board"].values():
+        if len(pos) > 0:
+            if len(pos) == 1:  # single stones
+                if pos[0] == "1" or pos[0] == "10":
+                    road_stones_w += 1
+                elif pos[0] == "2" or pos[0] == "20":
+                    road_stones_b += 1
 
-    def can_he_threaten():
-        for move in get_all_moves(brett):
-            move["turn"] -= 1
-            for second_move in get_all_moves(move):
-                if is_won(second_move) == player_to_play:
-                    return 2
-        return 1
+            else:  # stacks
+                if len(pos) > board_size + 1:
+                    pos = pos[-1 * (board_size + 1):-1]
+                if abs(int(pos[-1])) % 9 == 1:  # if the stack belongs to white
+                    if pos[-1] == "1" or pos[-1] == "10":
+                        road_stones_w += 1
+                    if pos[-1] == "10":
+                        for stone in pos[:-1]:
+                            if stone == "1":
+                                stones_under_cap_w += 1
+                    else:
+                        for stone in pos[:-1]:
+                            if stone == "1":
+                                stones_in_stack_w += 1
+                else:  # the stack belongs to black
+                    if pos[-1] == "2" or pos[-1] == "20":
+                        road_stones_b += 1
+                    if pos[-1] == "20":
+                        for stone in pos[:-1]:
+                            if stone == "2":
+                                stones_under_cap_b += 1
+                    else:
+                        for stone in pos[:-1]:
+                            if stone == "2":
+                                stones_in_stack_b += 1
 
-    return am_i_threatening() + can_he_threaten()
+    # def get_cat(brett):
+    #
+    #     player_to_play = (brett["turn"] % 2) + 1
+    #     player_just_played = 3 - player_to_play
+    #
+    #     def am_i_threatening():
+    #         brett["turn"] -= 1
+    #         for moves in get_all_moves(brett):
+    #             if is_won(moves) == player_just_played:
+    #                 brett["turn"] += 1
+    #                 return 0
+    #         brett["turn"] += 1
+    #         return 2
+    #
+    #     def can_he_threaten():
+    #         for move in get_all_moves(brett):
+    #             move["turn"] -= 1
+    #             for second_move in get_all_moves(move):
+    #                 if is_won(second_move) == player_to_play:
+    #                     return 2
+    #         return 1
+    #     cat = am_i_threatening() + can_he_threaten()
+    #     print(f"calculated category to be {cat}")
+    #     return cat
+    #
+    #
+    # def get_nr_of_threats(brett):
+    #     nr_of_threats = 0
+    #     player = (brett["turn"] % 2) + 1
+    #     for move in get_all_moves(brett):
+    #         move["turn"] -= 1
+    #         for second_move in get_all_moves(move):
+    #             if is_won(second_move) == player:
+    #                 nr_of_threats += 1
+    #     print(f"found {nr_of_threats} threats")
+    #     return nr_of_threats
 
-
-def get_nr_of_threats(brett):
-    nr_of_threats = 0
-    player = (brett["turn"] % 2) + 1
-    for move in get_all_moves(brett):
-        move["turn"] -= 1
-        for second_move in get_all_moves(move):
-            if is_won(second_move) == player:
-                nr_of_threats += 1
-    return nr_of_threats
-
-
-# place(board, ("c", "0"), "normal")
-# place(board, ("a", "1"), "normal")
-# # # move(board, ("a", "0"), "right", [1])
-# # # #
-# place(board, ("d", "2"), "normal")
-# place(board, ("a", "3"), "normal")
-# # # move(board, ("a", "1"), "down", [2])
-# place(board, ("c", "1"), "normal")
-# place(board, ("b", "1"), "normal")
-# # # #
-# place(board, ("c", "2"), "normal")
-# place(board, ("b", "2"), "normal")
-# # # #
-# # place(board, ("e", "0"), "normal")
-#
-# #
-# place(board, ("e", "2"), "normal")
-# place(board, ("b", "4"), "normal")
-# #
-# place(board, ("e", "3"), "normal")
-# place(board, ("c", "4"), "normal")
-# #
-# place(board, ("e", "4"), "normal")
-# # place(board, ("c", "2"), "normal")
-#
-# place(board, ("e", "0"), "normal")
-# place(board, ("d", "0"), "normal")
-#
-# place(board, ("e", "2"), "normal")
-# place(board, ("d", "1"), "normal")
-#
-# place(board, ("e", "4"), "normal")
-# place(board, ("d", "3"), "normal")
-# print("winner", type(is_won(board)))
-# print(letters[-1], numbers[-1])
-# print(is_won(board))
-
-
-winner = None
-
-while is_won(board) is None and winner != 1:
-    before_hum = copy.deepcopy(board)
-    while board == before_hum:
-        get_human_move()  # we get human move until a move was made
-    winner = is_won(board)  # if white has won pc will make move but then
-    # while loop will break
-
-    print("""
-                                THE WINNER IIISIIISIISIISISISISI...
-
-                        ITS THE WINNER WHO IS...
-
-
-                                """, is_won(board)
-          )
-    if winner != 1:
-        winning_move_made = 0
-        for new_board in get_all_moves(board):
-            if is_won(new_board) == 2:
-                board = new_board
-                winning_move_made = 1
-                break  # if there is a winning move, break
-
-        if winning_move_made == 0:
-            white_has_winning_move = 0
-            buffer_board = copy.deepcopy(board)
-            for new_board in get_all_moves(board):
-                for board_after_white in get_all_moves(new_board):  # check if white has any winning moves after black move
-                    if is_won(board_after_white) == 1:              #
-                        white_has_winning_move = 1
-                        print("""
-                            HIaiaiasidfaisdfidfaidfiadjfoasdfaosidfas
-
-
-
-                            careeeful now!!!
-
-                            """)                  #
-                        break
-                if white_has_winning_move == 1:
-                    break
-            if white_has_winning_move == 1:
-                print("                                             white has a winning move")
-                no_white_winning = []                               # if white does have winning moves after blacks move, we append black's move to that list
-                for new_board in get_all_moves(board):
-                    white_has_winning_move_for_that_board = 0               #
-                    for board_after_white in get_all_moves(new_board):  # for every new_board, check if white has no winning moves,
-                        if is_won(board_after_white) == 1:                  #
-                            white_has_winning_move_for_that_board = 1       #
-                            break
-                    if white_has_winning_move_for_that_board == 0:    # append new_board to list with all boards where white can not win as soon as
-                        no_white_winning.append(new_board)
-
-# here we have all boards where white cannot win.
-# now we determine the category of our strongest moves in no_white_winning
-# 1 I threaten but enemy can't
-# 2 I threaten but enemy can too
-# 3 I can't threaten but at least enemy can't either
-# 4 I can't threaten but my enemy can
-
-            category = 4
-            for move_board in no_white_winning:
-                new_cat = get_cat(move_board)
-                if new_cat < category:
-                    category = copy.copy(new_cat)
-                if category == 1:
-                    break
-# now we have determined the best category of our moves. each category we handle somewhat differently
-            if category == 1:
-                all_cat_1_moves = []
-                for move_board in no_white_winning:
-                    if get_cat(move_board) == 1:
-                        all_cat_1_moves.append(move_board)  # now we have all the moves we must consider for the next step
-                # we want to find all boards where white can only make moves of cat 4
-                avg_nr_of_threats = 0
-                for move_board in all_cat_1_moves:
-                    all_cat_4_for_that_move_board = []
-                    broken = 0
-                    for board_after_white in get_all_moves(move_board):
-                        if get_cat(board_after_white) < 4:
-                            broken = 1
-                            break
-                        else:
-                            all_cat_4_for_that_move_board.append(board_after_white)
-                    if len(all_cat_4_for_that_move_board) > 0 and broken == 0:     # if there are moves where white can only (!) respond with cat 4 moves
-                        nr_of_threats = 0
-                        for board_after_white in all_cat_4_for_that_move_board:
-                            nr_of_threats += get_nr_of_threats(board_after_white)
-                        new_avg_of_threats = nr_of_threats /\
-                            len(all_cat_4_for_that_move_board)
-                        if new_avg_of_threats > avg_nr_of_threats:
-                            avg_nr_of_threats = copy.copy(new_avg_of_threats)
-                            buffer_board = copy.deepcopy(move_board)
-                if buffer_board == board:  # there are cat 3 moves for every one of blacks moves, buffer_board has not changed
-                    nr_of_3_moves = 10000
-                    for move_board in all_cat_1_moves:      # we want to find the board for which there are the least 3 mvs
-                        new_nr_of_3_moves = 0
-                        for board_after_white in get_all_moves(move_board):
-                            if get_cat(board_after_white) < 4:
-                                new_nr_of_3_moves += 1
-                        if new_nr_of_3_moves < nr_of_3_moves:
-                            nr_of_3_moves = copy.copy(new_nr_of_3_moves)
-                            buffer_board = copy.deepcopy(move_board)
-
-            elif category == 2:
-                all_cat_2_moves = []
-                for move_board in no_white_winning:
-                    if get_cat(move_board) == 2:
-                        all_cat_2_moves.append(move_board)  # now we have all the moves we must consider for the next step
-
-            elif category == 3:
-                all_cat_3_moves = []
-                for move_board in no_white_winning:
-                    if get_cat(move_board) == 3:
-                        all_cat_3_moves.append(move_board)  # now we have all the moves we must consider for the next step
-
-            else:
-                all_cat_4_moves = no_white_winning  # now we have all the moves we must consider for the next step
+    # place(board, ("c", "0"), "normal")
+    # place(board, ("a", "1"), "normal")
+    # # # move(board, ("a", "0"), "right", [1])
+    # # # #
+    # place(board, ("d", "2"), "normal")
+    # place(board, ("a", "3"), "normal")
+    # # # move(board, ("a", "1"), "down", [2])
+    # place(board, ("c", "1"), "normal")
+    # place(board, ("b", "1"), "normal")
+    # # # #
+    # place(board, ("c", "2"), "normal")
+    # place(board, ("b", "2"), "normal")
+    # # # #
+    # # place(board, ("e", "0"), "normal")
+    #
+    # #
+    # place(board, ("e", "2"), "normal")
+    # place(board, ("b", "4"), "normal")
+    # #
+    # place(board, ("e", "3"), "normal")
+    # place(board, ("c", "4"), "normal")
+    # #
+    # place(board, ("e", "4"), "normal")
+    # # place(board, ("c", "2"), "normal")
+    #
+    # place(board, ("e", "0"), "normal")
+    # place(board, ("d", "0"), "normal")
+    #
+    # place(board, ("e", "2"), "normal")
+    # place(board, ("d", "1"), "normal")
+    #
+    # place(board, ("e", "4"), "normal")
+    # place(board, ("d", "3"), "normal")
+    # print("winner", type(is_won(board)))
+    # print(letters[-1], numbers[-1])
+    # print(is_won(board))
 
 
 print_board(board)
