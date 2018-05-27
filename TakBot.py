@@ -31,11 +31,18 @@ import random
 # config:
 
 board_size = 4
-nr_before_normal = 2 * board_size - 1  # nr of turn before which the bot only places normal stones in rows b and c
+
+# weights for value of board function:
+# with these you can determine what the computer should focus more strongly on
+super = 4       # nr of stones that count for a road
+potent = 1      # nr of stones hidden in stacks of ones own controle
+cappot = 2     # nr of stones hidden in a stack under the capstone
+threat = 15     # nr of moves it takes to win
+
 
 # end of config
 
-
+nr_before_normal = 2 * board_size - 1  # nr of turn before which the bot only places normal stones in rows b and c
 if board_size == 3:
     nr_of_stones = 10
     nr_of_capstones = 0
@@ -776,13 +783,13 @@ def get_human_move():
 
 
 def get_value(bret):
-    road_stones_w = 0
+    road_stones_w = 0       # weights: super
     road_stones_b = 0
-    stones_in_stack_w = 0
+    stones_in_stack_w = 0     # potent
     stones_in_stack_b = 0
-    stones_under_cap_w = 0
+    stones_under_cap_w = 0      # cappot
     stones_under_cap_b = 0
-    moves_to_win_w = 3
+    moves_to_win_w = 3          # threat
     moves_to_win_b = 3
 
     for pos in bret["board"].values():
@@ -819,80 +826,238 @@ def get_value(bret):
                             if stone == "2":
                                 stones_in_stack_b += 1
 
-    # def get_cat(brett):
-    #
-    #     player_to_play = (brett["turn"] % 2) + 1
-    #     player_just_played = 3 - player_to_play
-    #
-    #     def am_i_threatening():
-    #         brett["turn"] -= 1
-    #         for moves in get_all_moves(brett):
-    #             if is_won(moves) == player_just_played:
-    #                 brett["turn"] += 1
-    #                 return 0
-    #         brett["turn"] += 1
-    #         return 2
-    #
-    #     def can_he_threaten():
-    #         for move in get_all_moves(brett):
-    #             move["turn"] -= 1
-    #             for second_move in get_all_moves(move):
-    #                 if is_won(second_move) == player_to_play:
-    #                     return 2
-    #         return 1
-    #     cat = am_i_threatening() + can_he_threaten()
-    #     print(f"calculated category to be {cat}")
-    #     return cat
-    #
-    #
-    # def get_nr_of_threats(brett):
-    #     nr_of_threats = 0
-    #     player = (brett["turn"] % 2) + 1
-    #     for move in get_all_moves(brett):
-    #         move["turn"] -= 1
-    #         for second_move in get_all_moves(move):
-    #             if is_won(second_move) == player:
-    #                 nr_of_threats += 1
-    #     print(f"found {nr_of_threats} threats")
-    #     return nr_of_threats
+    player = (bret["turn"] % 2) + 1
+    if player != 1:
+        bret["turn"] -= 1
 
-    # place(board, ("c", "0"), "normal")
-    # place(board, ("a", "1"), "normal")
-    # # # move(board, ("a", "0"), "right", [1])
-    # # # #
-    # place(board, ("d", "2"), "normal")
-    # place(board, ("a", "3"), "normal")
-    # # # move(board, ("a", "1"), "down", [2])
-    # place(board, ("c", "1"), "normal")
-    # place(board, ("b", "1"), "normal")
-    # # # #
-    # place(board, ("c", "2"), "normal")
-    # place(board, ("b", "2"), "normal")
-    # # # #
-    # # place(board, ("e", "0"), "normal")
-    #
-    # #
-    # place(board, ("e", "2"), "normal")
-    # place(board, ("b", "4"), "normal")
-    # #
-    # place(board, ("e", "3"), "normal")
-    # place(board, ("c", "4"), "normal")
-    # #
-    # place(board, ("e", "4"), "normal")
-    # # place(board, ("c", "2"), "normal")
-    #
-    # place(board, ("e", "0"), "normal")
-    # place(board, ("d", "0"), "normal")
-    #
-    # place(board, ("e", "2"), "normal")
-    # place(board, ("d", "1"), "normal")
-    #
-    # place(board, ("e", "4"), "normal")
-    # place(board, ("d", "3"), "normal")
-    # print("winner", type(is_won(board)))
-    # print(letters[-1], numbers[-1])
-    # print(is_won(board))
+    for new_bret in get_all_moves(bret):
+        if is_won(new_bret) == 1:
+            moves_to_win_w = 1
+            break
+    if moves_to_win_w == 3:
+        for new_bret in get_all_moves(bret):
+            new_bret["turn"] -= 1
+            for new_new_bret in get_all_moves(new_bret):
+                if is_won(new_new_bret) == 1:
+                    moves_to_win_w = 2
+                    break
+            if moves_to_win_w == 2:
+                break
+    bret["turn"] += 1  # now we do the same for black
+    for new_bret in get_all_moves(bret):
+        if is_won(new_bret) == 2:
+            moves_to_win_b = 1
+            break
+    if moves_to_win_b == 3:
+        for new_bret in get_all_moves(bret):
+            new_bret["turn"] -= 1
+            for new_new_bret in get_all_moves(new_bret):
+                if is_won(new_new_bret) == 2:
+                    moves_to_win_b = 2
+                    break
+            if moves_to_win_b == 2:
+                break
+    bret["turn"] -= 1
+
+    # the value is described as a fraction of black / white, so black wants to maximise and white wants to minimise
+    black1 = road_stones_b * super
+    black2 = stones_in_stack_b * potent
+    black3 = stones_under_cap_b * cappot
+    black4 = (3 - moves_to_win_b) * threat
+    black = black1 + black2 + black3 + black4 + 0.0000000001
+    white1 = road_stones_w * super
+    white2 = stones_in_stack_w * potent
+    white3 = stones_under_cap_w * cappot
+    white4 = (3 - moves_to_win_w) * threat
+    white = white1 + white2 + white3 + white4 + 0.0000000001
+
+    value = black / white
+
+    return value
 
 
+def get_no_winning_moves(bret):
+    player = (bret["turn"] % 2) + 1
+    if player == 1:
+        for move in get_all_moves(bret):
+            has_winning_for_op = 0
+            for new_move in get_all_moves(move):
+                if is_won(new_move) == 2:
+                    has_winning_for_op = 1
+                    break
+            if has_winning_for_op == 0:
+                yield move
+    else:
+        for move in get_all_moves(bret):
+            has_winning_for_op = 0
+            for new_move in get_all_moves(move):
+                if is_won(new_move) == 1:
+                    has_winning_for_op = 1
+                    break
+            if has_winning_for_op == 0:
+                yield move
+
+
+def get_3_strongest_moves(bret):
+    list_with_strongest = [0, 0, 0]
+    player = (bret["turn"] % 2) + 1
+    if player == 1:
+        list_with_vals = [10000, 10000, 10000]
+        for new_bret in get_no_winning_moves(bret):
+            _ = get_value(new_bret)
+            if _ < list_with_vals[0]:
+                list_with_vals.insert(0, _)
+                list_with_strongest.insert(0, new_bret)
+            elif _ < list_with_vals[1]:
+                list_with_vals.insert(1, _)
+                list_with_strongest.insert(1, new_bret)
+            elif _ < list_with_vals[2]:
+                list_with_vals.insert(2, _)
+                list_with_strongest.insert(2, new_bret)
+            list_with_vals = list_with_vals[:3]
+            list_with_strongest = list_with_strongest[:3]
+    else:
+        list_with_vals = [0, 0, 0]
+        for new_bret in get_no_winning_moves(bret):
+            _ = get_value(new_bret)
+            if _ > list_with_vals[0]:
+                list_with_vals.insert(0, _)
+                list_with_strongest.insert(0, new_bret)
+            elif _ > list_with_vals[1]:
+                list_with_vals.insert(1, _)
+                list_with_strongest.insert(1, new_bret)
+            elif _ > list_with_vals[2]:
+                list_with_vals.insert(2, _)
+                list_with_strongest.insert(2, new_bret)
+            list_with_vals = list_with_vals[:3]
+            list_with_strongest = list_with_strongest[:3]
+
+    for elem in list_with_strongest:
+        if elem == 0:
+            list_with_strongest.remove(elem)
+    for elem in list_with_strongest:
+        if elem == 0:
+            list_with_strongest.remove(elem)
+
+    average_val = sum(list_with_vals) / 3
+
+    return list_with_strongest, average_val
+
+
+list_with_averages = []
+
+
+def get_pc_move():
+    global board, list_with_averages
+    new_boards = get_3_strongest_moves(board)
+    average = 0
+    for new_board in new_boards[0]:
+        new_average = 0
+        boards_after_white = get_3_strongest_moves(new_board)
+        for board_after_white in boards_after_white[0]:
+            boards_after_black = get_3_strongest_moves(board_after_white)
+            new_average += boards_after_black[1]
+        new_average = new_average / len(boards_after_white[0])
+        if new_average > average:
+            buffer_board1 = copy.deepcopy(new_board)
+            average = copy.copy(new_average)
+    board = copy.deepcopy(buffer_board1)
+    list_with_averages.append(average)
+    print(f"average is {average}")
+
+
+winner = None
+while winner is None:
+    before_hum = copy.deepcopy(board)
+    while board == before_hum:
+        get_human_move()
+    winner = is_won(board)
+    before_pc = copy.deepcopy(board)
+    if winner != 1:
+        for movee in get_all_moves(board):
+            if is_won(movee) == 2:
+                board = copy.deepcopy(movee)
+                winner = 2
+    if winner is None:
+        get_pc_move()
+    if before_pc == board:
+        print("I resign you little bitch cant program anything looser")
+
+
+print(f"course of the game for geeks: {list_with_averages}")
 print_board(board)
-print(f"{is_won(board)} has won! gg ^^")
+print(f"{winner} has won! gg ^^")
+
+# def get_cat(brett):
+#
+#     player_to_play = (brett["turn"] % 2) + 1
+#     player_just_played = 3 - player_to_play
+#
+#     def am_i_threatening():
+#         brett["turn"] -= 1
+#         for moves in get_all_moves(brett):
+#             if is_won(moves) == player_just_played:
+#                 brett["turn"] += 1
+#                 return 0
+#         brett["turn"] += 1
+#         return 2
+#
+#     def can_he_threaten():
+#         for move in get_all_moves(brett):
+#             move["turn"] -= 1
+#             for second_move in get_all_moves(move):
+#                 if is_won(second_move) == player_to_play:
+#                     return 2
+#         return 1
+#     cat = am_i_threatening() + can_he_threaten()
+#     print(f"calculated category to be {cat}")
+#     return cat
+#
+#
+# def get_nr_of_threats(brett):
+#     nr_of_threats = 0
+#     player = (brett["turn"] % 2) + 1
+#     for move in get_all_moves(brett):
+#         move["turn"] -= 1
+#         for second_move in get_all_moves(move):
+#             if is_won(second_move) == player:
+#                 nr_of_threats += 1
+#     print(f"found {nr_of_threats} threats")
+#     return nr_of_threats
+
+# place(board, ("c", "0"), "normal")
+# place(board, ("a", "1"), "normal")
+# # # move(board, ("a", "0"), "right", [1])
+# # # #
+# place(board, ("d", "2"), "normal")
+# place(board, ("a", "3"), "normal")
+# # # move(board, ("a", "1"), "down", [2])
+# place(board, ("c", "1"), "normal")
+# place(board, ("b", "1"), "normal")
+# # # #
+# place(board, ("c", "2"), "normal")
+# place(board, ("b", "2"), "normal")
+# # # #
+# # place(board, ("e", "0"), "normal")
+#
+# #
+# place(board, ("e", "2"), "normal")
+# place(board, ("b", "4"), "normal")
+# #
+# place(board, ("e", "3"), "normal")
+# place(board, ("c", "4"), "normal")
+# #
+# place(board, ("e", "4"), "normal")
+# # place(board, ("c", "2"), "normal")
+#
+# place(board, ("e", "0"), "normal")
+# place(board, ("d", "0"), "normal")
+#
+# place(board, ("e", "2"), "normal")
+# place(board, ("d", "1"), "normal")
+#
+# place(board, ("e", "4"), "normal")
+# place(board, ("d", "3"), "normal")
+# print("winner", type(is_won(board)))
+# print(letters[-1], numbers[-1])
+# print(is_won(board))
