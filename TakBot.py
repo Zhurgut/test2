@@ -30,14 +30,14 @@ import random
 
 # config:
 
-board_size = 4
+board_size = 5
 
 # weights for value of board function:
 # with these you can determine what the computer should focus more strongly on
 super = 4       # nr of stones that count for a road
 potent = 1      # nr of stones hidden in stacks of ones own controle
 cappot = 2     # nr of stones hidden in a stack under the capstone
-threat = 15     # nr of moves it takes to win
+threat = 10     # nr of moves it takes to win
 
 
 # end of config
@@ -383,6 +383,7 @@ def move(board, pos, direction, drops):
 
 
 def is_won(board):
+    # determines if a board is won for the player who just played
     player = board["turn"] % 2 + 1
     player = 3 - player
     stones_leftw = board["white_stones"] + board["white_capstones"]
@@ -622,10 +623,11 @@ def is_won(board):
         if board["board"][keys] == []:
             condizio = False
             break
-    if board["turn"] < board_size * 2 - 1:
-        # print("too low turn")
-        return None
 
+# print("theres a road maybe?")
+    road = is_road(next_list)
+    if road is not None:
+        return road
     elif stones_leftw == 0 or stones_leftb == 0:
         # print("Either no more stones")
         return whohasmoretopstones()
@@ -633,8 +635,7 @@ def is_won(board):
         # print("condizio")
         return whohasmoretopstones()
     else:
-        # print("theres a road maybe?")
-        return is_road(next_list)
+        None
 
 
 #
@@ -648,73 +649,77 @@ def is_won(board):
 #
 
 def get_all_moves(bret):
-    bret1 = copy.deepcopy(bret)
-    bret_before_move = copy.deepcopy(bret1)
-    # print_board(bret_before_move)  # #######################################################
-    # yields all possible board positions after one move without actually doing the move
-    scrambled_keys_old = list(bret1["board"].keys())
-    random.shuffle(scrambled_keys_old)
-    b_and_cs = []
-    emptis = []
-    rest = []
-    for feld in scrambled_keys_old:
-        if bret1["board"][feld] == [] and (feld[0] == "b" or feld[0] == "1"):
-            b_and_cs.append(feld)
-        elif bret1["board"][feld] == []:
-            emptis.append(feld)
-        else:
-            rest.append(feld)
-    scrambled_keys = b_and_cs + emptis + rest
-    for position in scrambled_keys:
-        if bret1["board"][position] == []:
-            # print("place() coming")  # ###################################
-            # go through all possible place()
-            for type in types:
-                place(bret1, position, type)
-                # print_board(bret1)
-                # print(bret1["turn"], bret_before_move["turn"])
-                # print(bret1["turn"] > bret_before_move["turn"])
-                if bret1["turn"] > bret_before_move["turn"]:  # if a move was made
-                    # print("move_was_made")
-                    # print("before ")
-                    # print_board(bret_before_move)
-                    bret_after_move = copy.deepcopy(bret1)
-                    # print("after ")
-                    # print_board(bret_after_move)
-                    bret1 = copy.deepcopy(bret_before_move)
+    if is_won(bret) is not None:
+        print("returning the normal brett unchanged because its won")
+        yield bret
+    else:
+        bret1 = copy.deepcopy(bret)
+        bret_before_move = copy.deepcopy(bret1)
+        # print_board(bret_before_move)  # #######################################################
+        # yields all possible board positions after one move without actually doing the move
+        scrambled_keys_old = list(bret1["board"].keys())
+        random.shuffle(scrambled_keys_old)
+        b_and_cs = []
+        emptis = []
+        rest = []
+        for feld in scrambled_keys_old:
+            if bret1["board"][feld] == [] and (feld[0] == "b" or feld[0] == "1"):
+                b_and_cs.append(feld)
+            elif bret1["board"][feld] == []:
+                emptis.append(feld)
+            else:
+                rest.append(feld)
+        scrambled_keys = b_and_cs + emptis + rest
+        for position in scrambled_keys:
+            if bret1["board"][position] == []:
+                # print("place() coming")  # ###################################
+                # go through all possible place()
+                for type in types:
+                    place(bret1, position, type)
                     # print_board(bret1)
-                    # print("placed")
-                    yield bret_after_move
-        else:
-            # go through all possible move()
-            # print("move coming !!!!!!!!!!!!!!!!")  # ##############################################################################
-            max_len = board_size
-            lennn = len(bret1["board"][position])
-            if lennn < board_size:
-                max_len = lennn
-            if max_len == 1:
-                drop_list = all_moves1
-            elif max_len == 2:
-                drop_list = all_moves2
-            elif max_len == 3:
-                drop_list = all_moves3
-            elif max_len == 4:
-                drop_list = all_moves4
-            elif max_len == 5:
-                drop_list = all_moves5
-            elif max_len == 6:
-                drop_list = all_moves6
-            # print(drop_list)  # ##################################################################
-            for direction in directions:
-                for drop_pattern in drop_list:
-                    bret_before_move = copy.deepcopy(bret1)
-                    move(bret1, position, direction, drop_pattern)
+                    # print(bret1["turn"], bret_before_move["turn"])
+                    # print(bret1["turn"] > bret_before_move["turn"])
                     if bret1["turn"] > bret_before_move["turn"]:  # if a move was made
+                        # print("move_was_made")
+                        # print("before ")
+                        # print_board(bret_before_move)
                         bret_after_move = copy.deepcopy(bret1)
+                        # print("after ")
+                        # print_board(bret_after_move)
                         bret1 = copy.deepcopy(bret_before_move)
                         # print_board(bret1)
-                        # print("moved")  # #####################################################################
+                        # print("placed")
                         yield bret_after_move
+            else:
+                # go through all possible move()
+                # print("move coming !!!!!!!!!!!!!!!!")  # ##############################################################################
+                max_len = board_size
+                lennn = len(bret1["board"][position])
+                if lennn < board_size:
+                    max_len = lennn
+                if max_len == 1:
+                    drop_list = all_moves1
+                elif max_len == 2:
+                    drop_list = all_moves2
+                elif max_len == 3:
+                    drop_list = all_moves3
+                elif max_len == 4:
+                    drop_list = all_moves4
+                elif max_len == 5:
+                    drop_list = all_moves5
+                elif max_len == 6:
+                    drop_list = all_moves6
+                # print(drop_list)  # ##################################################################
+                for direction in directions:
+                    for drop_pattern in drop_list:
+                        bret_before_move = copy.deepcopy(bret1)
+                        move(bret1, position, direction, drop_pattern)
+                        if bret1["turn"] > bret_before_move["turn"]:  # if a move was made
+                            bret_after_move = copy.deepcopy(bret1)
+                            bret1 = copy.deepcopy(bret_before_move)
+                            # print_board(bret1)
+                            # print("moved")  # #####################################################################
+                            yield bret_after_move
 
 
 #
@@ -772,7 +777,7 @@ def get_human_move():
         dropp = []
         for nr in range(board_size):
             droplet = input(f"drop? 0-{board_size} ")
-            while len(droplet) < 1:
+            while len(droplet) < 1 or droplet not in numbers:
                 droplet = input(f"drop? 0-{board_size} ")
             droplet = int(droplet)
             if droplet > 0:
@@ -789,8 +794,8 @@ def get_value(bret):
     stones_in_stack_b = 0
     stones_under_cap_w = 0      # cappot
     stones_under_cap_b = 0
-    moves_to_win_w = 3          # threat
-    moves_to_win_b = 3
+    moves_to_win_w = 100          # threat
+    moves_to_win_b = 100
 
     for pos in bret["board"].values():
         if len(pos) > 0:
@@ -825,50 +830,61 @@ def get_value(bret):
                         for stone in pos[:-1]:
                             if stone == "2":
                                 stones_in_stack_b += 1
-
+    player_changed = False
     player = (bret["turn"] % 2) + 1
     if player != 1:
         bret["turn"] -= 1
+        player_changed = True
 
-    for new_bret in get_all_moves(bret):
-        if is_won(new_bret) == 1:
-            moves_to_win_w = 1
-            break
-    if moves_to_win_w == 3:
+    # now the player is 1
+    if is_won(bret) == 1:
+        moves_to_win_w = -10000
+    if moves_to_win_w == 100:
+        for new_bret in get_all_moves(bret):
+            # now player 1 has played, so the player for the is_won func is 2 which gets reset to 1
+            if is_won(new_bret) == 1:
+                moves_to_win_w = 95
+                break
+    if moves_to_win_w == 100:
         for new_bret in get_all_moves(bret):
             new_bret["turn"] -= 1
             for new_new_bret in get_all_moves(new_bret):
                 if is_won(new_new_bret) == 1:
-                    moves_to_win_w = 2
+                    moves_to_win_w = 98
                     break
-            if moves_to_win_w == 2:
+            if moves_to_win_w == 98:
                 break
     bret["turn"] += 1  # now we do the same for black
-    for new_bret in get_all_moves(bret):
-        if is_won(new_bret) == 2:
-            moves_to_win_b = 1
-            break
-    if moves_to_win_b == 3:
+    if is_won(bret) == 2:
+        moves_to_win_b = -10000
+    if moves_to_win_b == 100:
+        for new_bret in get_all_moves(bret):
+            if is_won(new_bret) == 2:
+                moves_to_win_b = 95
+                break
+    if moves_to_win_b == 100:
         for new_bret in get_all_moves(bret):
             new_bret["turn"] -= 1
             for new_new_bret in get_all_moves(new_bret):
                 if is_won(new_new_bret) == 2:
-                    moves_to_win_b = 2
+                    moves_to_win_b = 98
                     break
-            if moves_to_win_b == 2:
+            if moves_to_win_b == 98:
                 break
     bret["turn"] -= 1
+    if player_changed:
+        bret["turn"] += 1
 
     # the value is described as a fraction of black / white, so black wants to maximise and white wants to minimise
     black1 = road_stones_b * super
     black2 = stones_in_stack_b * potent
     black3 = stones_under_cap_b * cappot
-    black4 = (3 - moves_to_win_b) * threat
+    black4 = (100 - moves_to_win_b) * threat
     black = black1 + black2 + black3 + black4 + 0.0000000001
     white1 = road_stones_w * super
     white2 = stones_in_stack_w * potent
     white3 = stones_under_cap_w * cappot
-    white4 = (3 - moves_to_win_w) * threat
+    white4 = (100 - moves_to_win_w) * threat
     white = white1 + white2 + white3 + white4 + 0.0000000001
 
     value = black / white
@@ -878,24 +894,35 @@ def get_value(bret):
 
 def get_no_winning_moves(bret):
     player = (bret["turn"] % 2) + 1
-    if player == 1:
-        for move in get_all_moves(bret):
-            has_winning_for_op = 0
-            for new_move in get_all_moves(move):
-                if is_won(new_move) == 2:
-                    has_winning_for_op = 1
-                    break
-            if has_winning_for_op == 0:
-                yield move
+    move_found = False
+    if is_won(bret) is not None:
+        move_found = True
+        yield bret
     else:
-        for move in get_all_moves(bret):
-            has_winning_for_op = 0
-            for new_move in get_all_moves(move):
-                if is_won(new_move) == 1:
-                    has_winning_for_op = 1
-                    break
-            if has_winning_for_op == 0:
-                yield move
+        if player == 1:
+            for move in get_all_moves(bret):
+                has_winning_for_op = 0
+                for new_move in get_all_moves(move):
+                    if is_won(new_move) == 2:
+                        has_winning_for_op = 1
+                        break
+                if has_winning_for_op == 0:
+                    move_found = True
+                    yield move
+        else:
+            for move in get_all_moves(bret):
+                has_winning_for_op = 0
+                for new_move in get_all_moves(move):
+                    if is_won(new_move) == 1:
+                        has_winning_for_op = 1
+                        break
+                if has_winning_for_op == 0:
+                    move_found = True
+                    yield move
+        if not move_found:
+            yield next(get_all_moves(bret))  # if there are no no_winning moves the next move gets yielded, the following player can just make the winning move
+        # if this move is at the end of the calculation (val4), its at least probable to be low in value as it is just the next move as the winning move
+        # which would promise a very extreme value can not be accounted for
 
 
 def get_3_strongest_moves(bret):
@@ -944,47 +971,98 @@ def get_3_strongest_moves(bret):
     return list_with_strongest, average_val
 
 
-list_with_averages = []
+def best_move(brett):
+    global board
+    best_found = False
+    for new_brett in get_all_moves(brett):
+        if is_won(new_brett) is not None:
+            bufferb = copy.deepcopy(new_brett)
+            best_found = True
+            print("theres a board won i guess")
+            break
+    if not best_found:
+        bufferb = copy.deepcopy(board)
+        player = brett["turn"] % 2 + 1
+        if player == 1:
+            print("looking for small val")
+            best_val = 2048
+            for new_brett in get_no_winning_moves(brett):
+                new_val = get_value(new_brett)
+                if new_val < best_val:
+                    bufferb = copy.deepcopy(new_brett)
+                    best_val = copy.copy(new_val)
+        else:
+            print("looking for big val")
+            best_val = 0
+            for new_brett in get_no_winning_moves(brett):
+                new_val = get_value(new_brett)
+                if new_val > best_val:
+                    bufferb = copy.deepcopy(new_brett)
+                    best_val = copy.copy(new_val)
+        print("best ", best_val)  # ##############################################################################################
+    return bufferb
 
 
 def get_pc_move():
-    global board, list_with_averages
-    new_boards = get_3_strongest_moves(board)
-    average = 0
-    for new_board in new_boards[0]:
-        new_average = 0
-        boards_after_white = get_3_strongest_moves(new_board)
-        for board_after_white in boards_after_white[0]:
-            boards_after_black = get_3_strongest_moves(board_after_white)
-            new_average += boards_after_black[1]
-        new_average = new_average / len(boards_after_white[0])
-        if new_average > average:
-            buffer_board1 = copy.deepcopy(new_board)
-            average = copy.copy(new_average)
-    board = copy.deepcopy(buffer_board1)
-    list_with_averages.append(average)
-    print(f"average is {average}")
+    global board
+    move_made = False
+    for my_move in get_all_moves(board):
+        if is_won(my_move) == 2:
+            board = copy.deepcopy(my_move)
+            move_made = True
+            break
+    if not move_made:
+        first_avg_val = 0
+        for my_move in get_no_winning_moves(board):
+            val1 = get_value(my_move)
+            print("val1", val1)
+            first_white_move = best_move(my_move)
+            val2 = get_value(first_white_move)
+            print("val2", val2)
+            my_move_after_white = best_move(first_white_move)
+            val3 = get_value(my_move_after_white)
+            print("val3", val3)
+            second_white_move = best_move(my_move_after_white)
+            val4 = get_value(second_white_move)
+            print("val4", val4)
+            next_avg_val = val1 * val2 * val3 * val4
+            print("next_avg = ", next_avg_val)
+            print()
+            if next_avg_val > first_avg_val:
+                first_avg_val = copy.copy(next_avg_val)
+                board = copy.deepcopy(my_move)
+                move_made = True
+        print("average of 4 moves ", first_avg_val)
+    if not move_made:
+        print("I resign in the name of god fuck you")
 
+
+# winner = None
+# while winner is None:
+#     before_hum = copy.deepcopy(board)
+#     while board == before_hum:
+#         get_human_move()
+#     winner = is_won(board)
+#     before_pc = copy.deepcopy(board)
+#     if winner != 1:
+#         get_pc_move()
+#     winner = is_won(board)
+#     if before_pc == board:
+#         print("I resign you little bitch cant program anything looser")
 
 winner = None
 while winner is None:
-    before_hum = copy.deepcopy(board)
-    while board == before_hum:
-        get_human_move()
-    winner = is_won(board)
-    before_pc = copy.deepcopy(board)
-    if winner != 1:
-        for movee in get_all_moves(board):
-            if is_won(movee) == 2:
-                board = copy.deepcopy(movee)
-                winner = 2
-    if winner is None:
-        get_pc_move()
-    if before_pc == board:
-        print("I resign you little bitch cant program anything looser")
+    get_human_move()
+    print(get_value(board))
+    # print("""
+    # best move:
+    # """)
+    # a = best_move(board)
+    # print(get_value(a))
+    # print_board(a)
 
 
-print(f"course of the game for geeks: {list_with_averages}")
+# print(f"course of the game for geeks: {list_with_averages}")
 print_board(board)
 print(f"{winner} has won! gg ^^")
 
