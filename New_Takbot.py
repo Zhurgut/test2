@@ -439,3 +439,26 @@ def is_won(board):
                 if is_road_piece(pos):
                     road_pieces.append(pos)
             return road_pieces
+
+        def make_groups(lischte):
+            all_road_pos = get_road_pieces()
+            list_with_groups = []
+            already_checked = set()
+            while len(all_road_pos) > 0:
+                new_group = []
+                new_group.append(all_road_pos[0])
+                all_road_pos.remove(all_road_pos[0])
+                already_checked.add(all_road_pos[0])
+                list_with_pos_to_check = []
+                for pos in board["next_fields"][all_road_pos[0]]:
+                    list_with_pos_to_check.append(pos)
+                while len(list_with_pos_to_check) > 0:
+                    checking_pos = list_with_pos_to_check[0]
+                    already_checked.add(checking_pos)
+                    list_with_pos_to_check.remove(checking_pos)
+                    if is_road_piece(checking_pos):
+                        for pos in board["next_fields"][checking_pos]:
+                            if pos not in already_checked:
+                                list_with_pos_to_check.append(pos)
+                        new_group.append(checking_pos)
+                list_with_groups.append(new_group)
