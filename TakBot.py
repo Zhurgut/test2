@@ -1,6 +1,7 @@
 import itertools as it
 import copy
 import random
+import time
 
 # I shall yet play that fucken game!
 
@@ -30,7 +31,7 @@ import random
 
 # config:
 
-board_size = 4
+board_size = 6
 
 # weights for value of board function:
 # with these you can determine what the computer should focus more strongly on
@@ -286,13 +287,8 @@ def move(board, pos, direction, drops):
             return False
         elif len(rly_relevant_walls) == 0:
             return True
-        else:
-            # now we've got one fucken wall in our way. here we determine, whether there is a capstone to crush it or not.
-            if int(board["board"][pos][-1]) > 7 and drops[-1] == 1:  # its a capstone and there is a last drop of only the capstone
-                # print(
-                #     "last move ",
-                #     get_last_field_of_move(), rly_relevant_walls[0]
-                # )
+        else:  # theres a wall, but is there a capstone?
+            if int(board["board"][pos][-1]) > 7 and drops[-1] == 1:
                 if get_last_field_of_move() == rly_relevant_walls[0]:
                     return True
                 else:
@@ -392,13 +388,11 @@ def is_won(board):
         a = player == 1 and board["white_capstones"] == 1
         b = player == 2 and board["black_capstones"] == 1
         if a or b:
-            # print("get cap pos ", a or b)  # ####################################################################
             return None
         else:
             for keys in board["board"].keys():
                 if len(board["board"][keys]) > 0:
                     if int(board["board"][keys][-1]) == 10 * player:
-                        # print("got cap pos keys at ", keys)  # ####################################################################
                         return keys
 
     def get_road_pieces():
@@ -966,27 +960,27 @@ def get_pc_move():
     print(f"average is {average}")
 
 
-winner = None
-while winner is None:
-    before_hum = copy.deepcopy(board)
-    while board == before_hum:
-        get_human_move()
-    winner = is_won(board)
-    before_pc = copy.deepcopy(board)
-    if winner != 1:
-        for movee in get_all_moves(board):
-            if is_won(movee) == 2:
-                board = copy.deepcopy(movee)
-                winner = 2
-    if winner is None:
-        get_pc_move()
-    if before_pc == board:
-        print("I resign you little bitch cant program anything looser")
-
-
-print(f"course of the game for geeks: {list_with_averages}")
-print_board(board)
-print(f"{winner} has won! gg ^^")
+# winner = None
+# while winner is None:
+#     before_hum = copy.deepcopy(board)
+#     while board == before_hum:
+#         get_human_move()
+#     winner = is_won(board)
+#     before_pc = copy.deepcopy(board)
+#     if winner != 1:
+#         for movee in get_all_moves(board):
+#             if is_won(movee) == 2:
+#                 board = copy.deepcopy(movee)
+#                 winner = 2
+#     if winner is None:
+#         get_pc_move()
+#     if before_pc == board:
+#         print("I resign you little bitch cant program anything looser")
+#
+#
+# print(f"course of the game for geeks: {list_with_averages}")
+# print_board(board)
+# print(f"{winner} has won! gg ^^")
 
 # def get_cat(brett):
 #
@@ -1061,3 +1055,22 @@ print(f"{winner} has won! gg ^^")
 # print("winner", type(is_won(board)))
 # print(letters[-1], numbers[-1])
 # print(is_won(board))
+
+
+for nr in range(15):
+    get_human_move()
+    print(is_won(board))
+
+time1 = time.time()
+a = 0
+for bret in get_all_moves(board):
+    for new in get_all_moves(bret):
+        print(is_won(new))
+        a += 1
+
+time2 = time.time()
+
+print(f"checked {a} boards in {time2-time1} seconds")
+print(time1)
+print(time2)
+print((time2-time1)/a)
