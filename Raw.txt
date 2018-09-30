@@ -1,0 +1,60 @@
+void setup() {
+  size(600, 600); // size
+  genome[0] = ""; // ------- Axiome ------- 
+  background(0); // background
+}
+ 
+String[] genome = new String[]; //put in number of iterations
+
+  
+String applyRules(char old) { //here go all the rules as to what happens with each character
+  String newGene = "";
+  if (old == '') {
+    newGene += "";
+  } else if (old == '') {
+    newGene += "";
+  } else {
+    newGene += old;
+  }
+  return newGene;
+  
+  // } else if (old == '') { -- SKETCH OF A RULE
+   //  newGene += "";
+}
+
+
+void growFromGenes(int geneToGrow) { // here go the instructions for each letter
+  for (int i = 0; i < genome[geneToGrow].length(); i++) {
+    char nextOP = genome[geneToGrow].charAt(i);
+    if (nextOP == '') {
+
+    } else if (nextOP == '') {
+
+    }
+  }
+  // } else if (nextOP == '') {  -- SKETCH INSTRUCTION
+  // Do things;
+}
+
+void createGenes(int last) {
+  String next = "";
+  for (int j = 0; j < genome[last].length(); j++) {
+    next += applyRules(genome[last].charAt(j));
+  }
+  genome[last + 1] = next;
+}
+
+int iteration = 1;
+
+void draw() {
+  frameRate(8);
+  translate(width / 2, height);
+  createGenes(iteration - 1);
+  // println("here goes genes " + genome[iteration]);
+  growFromGenes(iteration);
+  iteration++;
+  if (iteration == genome.length) {
+    saveFrame("NAME###.jpg"); // ------ SET A NAME FOR PIC TO SAVE HERE
+    noLoop();
+  }
+}
