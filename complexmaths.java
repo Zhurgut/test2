@@ -13,9 +13,11 @@
 public class complexmaths {
     public static void main(String[] args) {
 
-        Complex comp1 = new Complex(Math.toRadians(90), 1, 'p');
-        Complex comp2 = new Complex(1, -1, 'c');
-        Complex added = Complex.add(comp1, comp2);
+        Complex u = new Complex(1, 3, 'c');
+        Complex v = new Complex(2, -1, 'c');
+        Complex w = new Complex(1, 4, 'c');
+        Complex added = Complex.add(u, v);
+        Complex added2 = Complex.add(added, w);
         Complex divided = Complex.divide(comp2, added);
         Complex polared = new Complex(Math.PI / 2, 5, 'p');
         Complex nr1 = new Complex(-2, 1, 'c');
@@ -25,7 +27,7 @@ public class complexmaths {
         // Complex carl = Complex.multiply(comp1, Complex.multiply(comp1, comp1));
         // Complex.print(Complex.multiply(60, carl), 'c');
         // Complex.print(Complex.multiply(carl, carl), 'p');
-        Complex.print(nr1, 'c');
+        Complex.print(added2, 'c');
         System.out.print("Distance " + Complex.absolute(nr1));
 
     }
