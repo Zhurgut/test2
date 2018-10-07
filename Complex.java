@@ -20,8 +20,9 @@ public class Complex {
             } else if (real < 0 && imag < 0) { //third
                 angle = Math.acos(-rearg / distance) + Math.PI;
             } else { //the fourth and final
-                angle = Math.asin(imdist / distance) + Math.PI * 2;
+                angle = Math.asin(imdist / distance) + Math.PI * 2 + 0.000001;
             }
+            angle = angle % (Math.PI * 2);
         } else  if (form == 'p') {
             angle = rearg % (Math.PI * 2.0);
             distance = imdist;
