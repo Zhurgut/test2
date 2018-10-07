@@ -23,7 +23,7 @@ public class Complex {
                 angle = Math.asin(imdist / distance) + Math.PI * 2;
             }
         } else  if (form == 'p') {
-            angle = rearg % (Math.PI * 2);
+            angle = rearg % (Math.PI * 2.0);
             distance = imdist;
             real = Math.cos(angle) * imdist;
             imag = Math.sin(angle) * imdist;
