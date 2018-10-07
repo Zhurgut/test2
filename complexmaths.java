@@ -14,7 +14,6 @@
 public class complexmaths {
     public static void main(String[] args) {
 
-<<<<<<< HEAD
         Complex comp1 = new Complex(0, 1, 'c');
         Complex comp2 = new Complex(0, -1, 'c');
         Complex comp3 = new Complex(0, 1, 'c');
@@ -27,29 +26,16 @@ public class complexmaths {
 
         Complex.print(multiplied, 'p');
 
-=======
-        Complex u = new Complex(1, 3, 'c');
-        Complex v = new Complex(2, -1, 'c');
-        Complex w = new Complex(1, 4, 'c');
-        Complex added = Complex.add(u, v);
-        Complex added2 = Complex.add(added, w);
-        Complex divided = Complex.divide(comp2, added);
-        Complex polared = new Complex(Math.PI / 2, 5, 'p');
-        Complex nr1 = new Complex(-2, 1, 'c');
-        // Complex.print(comp1, 'c');
->>>>>>> 7ac70e10259ccea287cc141e9cce5960d3b077dd
         // Complex.print(Complex.multiply(comp1, comp1), 'p');
         // Complex.print(Complex.multiply(comp1, Complex.multiply(comp1, comp1)), 'p');
         // Complex carl = Complex.multiply(comp1, Complex.multiply(comp1, comp1));
         // Complex.print(Complex.multiply(60, carl), 'c');
         // Complex.print(Complex.multiply(carl, carl), 'p');
-<<<<<<< HEAD
-        // Complex.print(nr1, 'c');
-        // System.out.print("Distance " + Complex.absolute(nr1));
-=======
-        Complex.print(added2, 'c');
-        System.out.print("Distance " + Complex.absolute(nr1));
->>>>>>> 7ac70e10259ccea287cc141e9cce5960d3b077dd
+        //System.out.println(Math.sin(Math.PI / 4) % (Math.PI * 2));
+        Complex.print(nr, 'c');
+
+        System.out.print("Distance " + Complex.absolute(nr));
+
 
     }
 }
